@@ -1,9 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { Sparkles, Trophy, Flame, Pipette } from 'lucide-react';
+import { Sparkles, Trophy, Flame, Pipette, Droplets, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const HomeScreen = ({ motherColor, setMotherColor, onGenerate }) => {
+const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) => {
     const fileInputRef = useRef(null);
+
+    const modes = [
+        { id: 'vibrant', label: 'Vibrant', icon: Sparkles },
+        { id: 'monochrome', label: 'Mono', icon: Droplets },
+        { id: 'analogous', label: 'Analog', icon: Flame },
+        { id: 'tetradic', label: 'Tetrad', icon: Trophy },
+        { id: 'quadratic', label: 'Quad', icon: Sparkles },
+    ];
 
     const trendingPalettes = [
         { id: 1, name: "Sunset Dreams", colors: ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#F47C7C"] },
@@ -46,6 +54,27 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate }) => {
                         </div>
                     </motion.div>
                 </motion.div>
+            </div>
+
+            {/* Mode Selection */}
+            <div className="w-full px-4 space-y-3">
+                <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-widest">Generation Mode</p>
+                <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1">
+                    {modes.map((m) => {
+                        const Icon = m.icon;
+                        const isActive = mode === m.id;
+                        return (
+                            <button
+                                key={m.id}
+                                onClick={() => setMode(m.id)}
+                                className={`flex-1 py-3 rounded-xl flex flex-col items-center gap-1 transition-all ${isActive ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-gray-50'}`}
+                            >
+                                <Icon size={18} />
+                                <span className={`text-[10px] font-bold ${isActive ? 'text-white' : 'text-slate-500'}`}>{m.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Primary CTA */}

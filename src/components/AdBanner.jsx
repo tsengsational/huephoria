@@ -6,12 +6,23 @@ import React, { useEffect } from 'react';
  */
 const AdBanner = ({ slot }) => {
     useEffect(() => {
-        try {
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (e) {
-            console.error('AdSense error:', e);
-        }
-    }, []);
+        const pushAd = () => {
+            try {
+                const ads = document.getElementsByClassName('adsbygoogle');
+                for (let i = 0; i < ads.length; i++) {
+                    if (ads[i].innerHTML === '') {
+                        (window.adsbygoogle = window.adsbygoogle || []).push({});
+                    }
+                }
+            } catch (e) {
+                console.error('AdSense error:', e);
+            }
+        };
+
+        // Give the DOM a moment to settle
+        const timer = setTimeout(pushAd, 300);
+        return () => clearTimeout(timer);
+    }, [slot]);
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[100] flex justify-center bg-white/80 backdrop-blur-md border-t border-gray-100 p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
