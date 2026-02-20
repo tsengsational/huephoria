@@ -1,5 +1,5 @@
 {
-  "name": "huephoria",
+  "name": "palettable",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
     "colord": "^2.9.3",
+    "firebase": "^12.9.0",
     "framer-motion": "^12.34.0",
     "html-to-image": "^1.11.13",
     "lucide-react": "^0.564.0",

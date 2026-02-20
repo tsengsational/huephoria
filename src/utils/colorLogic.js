@@ -7,35 +7,71 @@ extend([namesPlugin, a11yPlugin]);
 /**
  * Generates a professional 36-Color Matrix (9x4 Grid).
  * @param {string} rootHex - The mother color hex string.
+ * @param {string} mode - 'monochrome', 'analogous', 'tetradic', 'quadratic'
  * @returns {Object} - Object { featured: Array(5), matrix: Array(4) }
  */
-export function generatePalette(rootHex) {
+export function generatePalette(rootHex, mode = 'vibrant') {
     const root = colord(rootHex);
     const rootHsl = root.toHsl();
 
     const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
 
-    // --- Step A: Generate the "Spine" (Row 3 - The Anchor) ---
+    // --- Step A: Define Hue Map for the Spine (9 steps) ---
+    // Index 4 is the Anchor (Root Color)
+    const hueOffsets = new Array(9).fill(0);
+
+    if (mode === 'vibrant') {
+        // The Original Curve (Vibrant)
+        for (let i = 0; i < 9; i++) {
+            const step = i - 4;
+            hueOffsets[i] = step * 22;
+        }
+    } else if (mode === 'monochrome') {
+        // Subtle shift for variety in monochrome
+        for (let i = 0; i < 9; i++) {
+            const step = i - 4;
+            hueOffsets[i] = step * 2; // Very subtle
+        }
+    } else if (mode === 'analogous') {
+        // Glide from -30 to +30
+        for (let i = 0; i < 9; i++) {
+            const step = i - 4;
+            hueOffsets[i] = step * 7.5; // (-30 to +30)
+        }
+    } else if (mode === 'tetradic') {
+        // Root (0), 60, 180, 240
+        // Map 9 steps to traverse these points beautifully
+        // -180, -120, -60, -30, 0, 30, 60, 120, 180
+        const targets = [-180, -120, -60, -30, 0, 30, 60, 120, 180];
+        targets.forEach((val, idx) => hueOffsets[idx] = val);
+    } else if (mode === 'quadratic') {
+        // 0, 90, 180, 270 (-90)
+        const targets = [-180, -135, -90, -45, 0, 45, 90, 135, 180];
+        targets.forEach((val, idx) => hueOffsets[idx] = val);
+    }
+
+    // --- Step B: Generate the "Spine" (Row 3 - The Anchor) ---
     const spine = [];
-    for (let i = -4; i <= 4; i++) {
-        let h = rootHsl.h;
+    for (let i = 0; i < 9; i++) {
+        const step = i - 4;
+        let h = (rootHsl.h + hueOffsets[i] + 360) % 360;
         let s = rootHsl.s;
         let l = rootHsl.l;
 
-        if (i < 0) {
-            const steps = Math.abs(i);
-            l = clamp(l + steps * 5, 0, 100);
-            s = clamp(s - steps * 5, 0, 100);
-            h = (h - steps * 22 + 360) % 360;
-        } else if (i > 0) {
-            l = clamp(l - i * 5, 0, 100);
-            s = clamp(s + i * 5, 0, 100);
-            h = (h + i * 22) % 360;
+        // Apply slight brightness/saturation curves even in multi-mode
+        if (step < 0) {
+            const mag = Math.abs(step);
+            l = clamp(l + mag * 5, 0, 100);
+            s = clamp(s - mag * 5, 0, 100);
+        } else if (step > 0) {
+            l = clamp(l - step * 5, 0, 100);
+            s = clamp(s + step * 5, 0, 100);
         }
+
         spine.push(colord({ h, s, l }));
     }
 
-    // --- Step B: Generate the Matrix ---
+    // --- Step C: Generate the Matrix ---
     const rawMatrix = [[], [], [], []];
 
     spine.forEach((baseColor) => {
@@ -66,7 +102,7 @@ export function generatePalette(rootHex) {
         }));
     });
 
-    // --- Step C: Format and Naming ---
+    // --- Step D: Format and Naming ---
     const matrix = rawMatrix.map(row =>
         row.map(c => ({
             hex: c.toHex().toUpperCase(),
@@ -83,7 +119,7 @@ export function generatePalette(rootHex) {
         matrix[2][6], // Pop
     ];
 
-    return { featured, matrix };
+    return { featured, matrix, mode };
 }
 
 export function generateArcPalette(rootHex) {

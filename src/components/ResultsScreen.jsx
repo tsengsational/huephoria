@@ -1,6 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 import { toPng } from 'html-to-image';
 
 const ColorBlock = ({ color, className, delay = 0 }) => (
@@ -40,11 +43,18 @@ const MatrixSwatch = ({ color, delay = 0 }) => (
 const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
     const exportRef = useRef(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [title, setTitle] = useState(paletteData?.title || '');
+    const { user } = useAuth();
 
     if (!paletteData) return null;
 
     const { featured, matrix } = paletteData;
     const [mother] = featured;
+
+    // Use the custom title if it exists, otherwise fall back to the color name or a global default
+    const displayTitle = paletteData.title || 'Color Palette';
 
     const handleExport = async () => {
         if (exportRef.current === null) return;
@@ -73,17 +83,77 @@ const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
         }
     };
 
+    const handleSave = async () => {
+        if (!user) {
+            alert('Please sign in to save palettes!');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            // Firestore doesn't support nested arrays, so we flatten the matrix
+            const dataToSave = {
+                ...paletteData,
+                matrix: paletteData.matrix.flat()
+            };
+
+            await addDoc(collection(db, 'palettes'), {
+                userId: user.uid,
+                data: dataToSave,
+                motherHex: mother.hex,
+                motherName: mother.name,
+                title: title.trim() || mother.name,
+                createdAt: serverTimestamp(),
+            });
+            setSaveSuccess(true);
+            setTitle(''); // Reset title
+            setTimeout(() => setSaveSuccess(false), 3000);
+        } catch (err) {
+            console.error('Failed to save palette', err);
+            alert('Error saving palette. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <div className="flex-1 flex flex-col space-y-8 pb-12">
             {/* Navigation */}
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={onBack}
-                    className="p-3 rounded-full bg-white shadow-sm border border-gray-100 text-slate-600 hover:bg-gray-50 transition-colors"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-                <h2 className="font-bold text-xl text-slate-800">Color Palette</h2>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={onBack}
+                        className="p-3 rounded-full bg-white shadow-sm border border-gray-100 text-slate-600 hover:bg-gray-50 transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className="flex flex-col">
+                        <h2 className="font-bold text-xl text-slate-800 truncate max-w-[200px] sm:max-w-none">
+                            {displayTitle}
+                        </h2>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-pink-500">
+                            {paletteData.mode || 'Monochrome'} Mode
+                        </span>
+                    </div>
+                </div>
+                {user && (
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="text"
+                            placeholder="Palette title..."
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="hidden sm:block px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all w-48"
+                        />
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving || saveSuccess}
+                            className={`p-3 rounded-full shadow-sm border transition-all flex items-center justify-center ${saveSuccess ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-100 text-slate-600 hover:bg-gray-50'}`}
+                        >
+                            {isSaving ? <RefreshCw size={20} className="animate-spin" /> : saveSuccess ? <Check size={20} /> : <Save size={20} />}
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div ref={exportRef} className="bg-gray-50 overflow-hidden">
@@ -97,7 +167,9 @@ const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
                     >
                         <div className={`space-y-2 ${mother.isDark ? 'text-white' : 'text-slate-900'}`}>
                             <span className="text-4xl font-black tracking-tighter sm:text-5xl">{mother.hex}</span>
-                            <p className="text-lg font-medium opacity-80 uppercase tracking-widest">{mother.name}</p>
+                            <p className="text-lg font-medium opacity-80 uppercase tracking-widest">
+                                {paletteData.title || mother.name}
+                            </p>
                         </div>
                         <button
                             onClick={() => navigator.clipboard.writeText(mother.hex)}
@@ -111,7 +183,7 @@ const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-1">
                             <h3 className="font-bold text-slate-700">36-Color Matrix</h3>
-                            <span className="text-xs text-slate-400 font-medium tracking-wider uppercase">Generated Curve</span>
+                            <span className="text-xs text-slate-400 font-medium tracking-wider uppercase">{paletteData.mode || 'Monochrome'} Curve</span>
                         </div>
 
                         <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-black/5">
