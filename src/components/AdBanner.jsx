@@ -19,8 +19,8 @@ const AdBanner = ({ slot }) => {
                 <ins
                     className="adsbygoogle"
                     style={{ display: 'inline-block', width: '100%', height: '60px' }}
-                    data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
-                    data-ad-slot={slot}
+                    data-ad-client={import.meta.env.VITE_ADSENSE_PUB_ID}
+                    data-ad-slot={slot || import.meta.env.VITE_ADSENSE_SLOT_ID}
                     data-ad-format="horizontal"
                     data-full-width-responsive="false"
                 />

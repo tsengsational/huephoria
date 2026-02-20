@@ -20,7 +20,7 @@ const Layout = ({ children }) => {
                 {children}
             </main>
 
-            <AdBanner slot="YOUR_STICKY_FOOTER_AD_SLOT_ID" />
+            <AdBanner />
         </div>
     );
 };
