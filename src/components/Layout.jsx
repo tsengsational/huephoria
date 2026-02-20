@@ -14,7 +14,7 @@ const Layout = ({ children, onNavigateSaved }) => {
             {/* Header */}
             <header className="px-6 py-4 flex justify-between items-center bg-white/50 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
                 <h1 className="text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-fuchsia-600">
-                    Palletable
+                    Palettable
                 </h1>
 
                 <div className="relative">
@@ -83,7 +83,7 @@ const Layout = ({ children, onNavigateSaved }) => {
                 {children}
             </main>
 
-            <AdBanner slot="YOUR_STICKY_FOOTER_AD_SLOT_ID" />
+            <AdBanner />
 
             <AuthModal
                 isOpen={isAuthModalOpen}
