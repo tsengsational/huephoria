@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check, MoreVertical, Grid, Monitor, Pipette, Sparkles, Flame, Trophy, Droplets } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { HexColorPicker } from 'react-colorful';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
@@ -8,24 +9,82 @@ import { toPng } from 'html-to-image';
 import { generateW3CTokens, downloadFile, generateProcreateSwatches, generateCSSVariables, generateHexList } from '../utils/exportUtils';
 import UIPlayground from './UIPlayground';
 
-const MatrixSwatch = ({ color, delay = 0 }) => (
+const MatrixSwatch = ({ color, delay = 0, onEdit, isCopied }) => (
     <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay }}
         whileHover={{ scale: 1.1, zIndex: 10 }}
-        className="aspect-square rounded-lg shadow-sm cursor-pointer relative group flex items-center justify-center border border-black/5"
+        className="aspect-square rounded-lg shadow-sm cursor-pointer relative group flex items-center justify-center border border-black/5 overflow-hidden"
         style={{ backgroundColor: color.hex }}
         title={`${color.name} (${color.hex})`}
-        onClick={() => navigator.clipboard.writeText(color.hex)}
     >
-        <div className={`opacity-0 group-hover:opacity-100 transition-opacity absolute inset-0 flex items-center justify-center bg-black/10 rounded-lg`}>
-            <Copy size={12} className={color.isDark ? 'text-white' : 'text-black'} />
+        {/* Success Overlay for Swatch */}
+        <AnimatePresence>
+            {isCopied && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className={`absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px] ${color.isDark ? 'bg-white/10' : 'bg-black/5'}`}
+                >
+                    <Check size={14} className={color.isDark ? 'text-white' : 'text-slate-900'} />
+                </motion.div>
+            )}
+        </AnimatePresence>
+
+        <div className="absolute inset-0 flex z-10">
+            <div
+                className={`flex-1 flex items-center justify-center transition-all 
+                    lg:opacity-0 lg:group-hover:opacity-100 
+                    opacity-60 hover:opacity-100
+                    ${color.isDark ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}
+                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(color.hex); }}
+                title="Copy HEX"
+            >
+                <div className={`p-1.5 rounded-md ${color.isDark ? 'bg-white/10' : 'bg-black/5'} backdrop-blur-sm lg:bg-transparent`}>
+                    <Copy size={14} className={color.isDark ? 'text-white' : 'text-black'} />
+                </div>
+            </div>
+            <div
+                className={`flex-1 flex items-center justify-center transition-all border-l border-white/5
+                    lg:opacity-0 lg:group-hover:opacity-100 
+                    opacity-60 hover:opacity-100
+                    ${color.isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                title="Edit Color"
+            >
+                <div className={`p-1.5 rounded-md ${color.isDark ? 'bg-white/10' : 'bg-black/5'} backdrop-blur-sm lg:bg-transparent`}>
+                    <Pipette size={14} className={color.isDark ? 'text-white' : 'text-black'} />
+                </div>
+            </div>
         </div>
     </motion.div>
 );
 
-const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, onBack }) => {
+const CopiedOverlay = ({ show, isDark }) => (
+    <AnimatePresence>
+        {show && (
+            <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.1 }}
+                className={`absolute inset-0 z-30 flex flex-col items-center justify-center backdrop-blur-[2px] ${isDark ? 'bg-white/10' : 'bg-black/5'}`}
+            >
+                <motion.div
+                    initial={{ y: 10 }}
+                    animate={{ y: 0 }}
+                    className={`flex flex-col items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}
+                >
+                    <Check size={28} className="drop-shadow-sm" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Copied!</span>
+                </motion.div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
+
+const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, onUpdateColor, onBack }) => {
     const exportRef = useRef(null);
     const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'ui'
     const [isExporting, setIsExporting] = useState(false);
@@ -33,6 +92,7 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [copiedHex, setCopiedHex] = useState(null);
     const [showExportMenu, setShowExportMenu] = useState(false);
+    const [editingColor, setEditingColor] = useState(null); // { type, index, hex }
     const { user } = useAuth();
 
     if (!paletteData) return null;
@@ -44,6 +104,12 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
         navigator.clipboard.writeText(hex);
         setCopiedHex(hex);
         setTimeout(() => setCopiedHex(null), 2000);
+    };
+
+    const handleColorChange = (newHex) => {
+        if (!editingColor) return;
+        setEditingColor({ ...editingColor, hex: newHex });
+        onUpdateColor(editingColor.type, editingColor.index, newHex);
     };
 
     const handleExport = (format) => {
@@ -188,26 +254,41 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                         className="results-screen__main-card w-full rounded-[3rem] shadow-2xl p-10 md:p-16 flex flex-col items-center text-center space-y-6 relative overflow-hidden group"
                                         style={{ backgroundColor: mother.hex }}
                                     >
-                                        <div className="results-screen__main-overlay absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-700" />
-
                                         <div className={`results-screen__main-info space-y-2 ${mother.isDark ? 'text-white' : 'text-slate-900'}`}>
                                             <h3 className="results-screen__main-hex text-5xl md:text-7xl font-black tracking-tighter uppercase mb-4">{mother.hex}</h3>
                                             <p className="results-screen__main-name text-xl md:text-2xl font-black opacity-90">{mother.name}</p>
                                         </div>
 
-                                        <button
-                                            onClick={() => copyToClipboard(mother.hex)}
-                                            className={`results-screen__main-copy-btn flex items-center gap-3 px-10 py-5 rounded-full font-black text-lg shadow-2xl hover:scale-105 active:scale-95 transition-all ${mother.isDark ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'
-                                                }`}
-                                        >
-                                            {copiedHex === mother.hex ? <Check size={22} className="results-screen__copy-icon" /> : <Copy size={22} className="results-screen__copy-icon" />}
-                                            <span className="results-screen__copy-label">{copiedHex === mother.hex ? 'Copied!' : 'Copy HEX'}</span>
-                                        </button>
+                                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                                            <button
+                                                onClick={() => copyToClipboard(mother.hex)}
+                                                className={`results-screen__main-copy-btn flex items-center gap-3 px-10 py-5 rounded-full font-black text-lg shadow-2xl hover:scale-105 active:scale-95 transition-all ${mother.isDark ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'
+                                                    }`}
+                                            >
+                                                {copiedHex === mother.hex ? <Check size={22} className="results-screen__copy-icon" /> : <Copy size={22} className="results-screen__copy-icon" />}
+                                                <span className="results-screen__copy-label">{copiedHex === mother.hex ? 'Copied!' : 'Copy HEX'}</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => setEditingColor({ type: 'featured', index: 0, hex: mother.hex })}
+                                                className={`p-5 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all ${mother.isDark ? 'bg-white/10 text-white backdrop-blur-md' : 'bg-slate-900/10 text-slate-900 backdrop-blur-md'}`}
+                                                title="Edit Base Color"
+                                            >
+                                                <Pipette size={22} />
+                                            </button>
+                                        </div>
                                     </motion.div>
 
                                     {/* HARMONIOUS TONES Bento Grid */}
                                     <div className="results-screen__bento-section space-y-6">
-                                        <h3 className="results-screen__bento-title text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 px-2">Harmonious Tones</h3>
+                                        <div className="flex items-center justify-between px-2">
+                                            <h3 className="results-screen__bento-title text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Harmonious Tones</h3>
+                                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                                <span>Click Card to Copy</span>
+                                                <span className="w-1 h-1 bg-slate-200 rounded-full" />
+                                                <span className="flex items-center gap-1 text-pink-400"><Pipette size={10} /> Edit</span>
+                                            </p>
+                                        </div>
                                         <div className="results-screen__bento-grid grid grid-cols-2 md:grid-cols-4 gap-4 h-[600px] md:h-[400px]">
                                             {/* Highlight Card */}
                                             <motion.div
@@ -217,6 +298,22 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                                 style={{ backgroundColor: featured[1].hex }}
                                             >
                                                 <div className="results-screen__bento-overlay absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+
+                                                <CopiedOverlay show={copiedHex === featured[1].hex} isDark={featured[1].isDark} />
+
+                                                <div className="absolute top-6 left-6 transition-all lg:opacity-0 lg:group-hover:opacity-40 opacity-40 z-10">
+                                                    <div className={`p-2 rounded-xl ${featured[1].isDark ? 'bg-white/10' : 'bg-black/5'} backdrop-blur-sm lg:bg-transparent`}>
+                                                        <Copy size={16} className={featured[1].isDark ? 'text-white' : 'text-black'} />
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    className="absolute top-6 right-6 p-3 rounded-2xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
+                                                    onClick={(e) => { e.stopPropagation(); setEditingColor({ type: 'featured', index: 1, hex: featured[1].hex }); }}
+                                                    title="Edit Color"
+                                                >
+                                                    <Pipette size={20} className={featured[1].isDark ? 'text-white' : 'text-black'} />
+                                                </div>
                                                 <div className={`results-screen__bento-content relative z-10 ${featured[1].isDark ? 'text-white' : 'text-slate-900'}`}>
                                                     <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Highlight</p>
                                                     <h4 className="font-black text-xl uppercase">{featured[1].hex}</h4>
@@ -227,10 +324,25 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                                 {/* Muted Card */}
                                                 <motion.div
                                                     onClick={() => copyToClipboard(featured[2].hex)}
-                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-end p-6"
+                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-end p-6 group relative overflow-hidden"
                                                     style={{ backgroundColor: featured[2].hex }}
                                                 >
-                                                    <div className={`results-screen__bento-content ${featured[2].isDark ? 'text-white' : 'text-slate-900'}`}>
+                                                    <CopiedOverlay show={copiedHex === featured[2].hex} isDark={featured[2].isDark} />
+
+                                                    <div className="absolute top-4 left-4 transition-all lg:opacity-0 lg:group-hover:opacity-40 opacity-40 z-10">
+                                                        <div className={`p-1.5 rounded-lg ${featured[2].isDark ? 'bg-white/10' : 'bg-black/5'} backdrop-blur-sm lg:bg-transparent`}>
+                                                            <Copy size={12} className={featured[2].isDark ? 'text-white' : 'text-black'} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div
+                                                        className="absolute top-4 right-4 p-2 rounded-xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
+                                                        onClick={(e) => { e.stopPropagation(); setEditingColor({ type: 'featured', index: 2, hex: featured[2].hex }); }}
+                                                        title="Edit Color"
+                                                    >
+                                                        <Pipette size={14} className={featured[2].isDark ? 'text-white' : 'text-black'} />
+                                                    </div>
+                                                    <div className={`results-screen__bento-content relative z-10 ${featured[2].isDark ? 'text-white' : 'text-slate-900'}`}>
                                                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Muted</p>
                                                         <h4 className="font-black text-xs uppercase">{featured[2].hex}</h4>
                                                     </div>
@@ -238,10 +350,25 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                                 {/* Accent Card */}
                                                 <motion.div
                                                     onClick={() => copyToClipboard(featured[4].hex)}
-                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-end p-6"
+                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-end p-6 group relative overflow-hidden"
                                                     style={{ backgroundColor: featured[4].hex }}
                                                 >
-                                                    <div className={`results-screen__bento-content ${featured[4].isDark ? 'text-white' : 'text-slate-900'}`}>
+                                                    <CopiedOverlay show={copiedHex === featured[4].hex} isDark={featured[4].isDark} />
+
+                                                    <div className="absolute top-4 left-4 transition-all lg:opacity-0 lg:group-hover:opacity-40 opacity-40 z-10">
+                                                        <div className={`p-1.5 rounded-lg ${featured[4].isDark ? 'bg-white/10' : 'bg-black/5'} backdrop-blur-sm lg:bg-transparent`}>
+                                                            <Copy size={12} className={featured[4].isDark ? 'text-white' : 'text-black'} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div
+                                                        className="absolute top-4 right-4 p-2 rounded-xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
+                                                        onClick={(e) => { e.stopPropagation(); setEditingColor({ type: 'featured', index: 4, hex: featured[4].hex }); }}
+                                                        title="Edit Color"
+                                                    >
+                                                        <Pipette size={14} className={featured[4].isDark ? 'text-white' : 'text-black'} />
+                                                    </div>
+                                                    <div className={`results-screen__bento-content relative z-10 ${featured[4].isDark ? 'text-white' : 'text-slate-900'}`}>
                                                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Accent</p>
                                                         <h4 className="font-black text-xs uppercase">{featured[4].hex}</h4>
                                                     </div>
@@ -251,12 +378,28 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                             {/* Deep Shade Card */}
                                             <motion.div
                                                 onClick={() => copyToClipboard(featured[3].hex)}
-                                                className="results-screen__bento-card col-span-1 md:col-span-2 rounded-[2.5rem] shadow-inner relative group cursor-pointer overflow-hidden border border-black/5 flex items-center justify-center"
+                                                className="results-screen__bento-card col-span-1 md:col-span-2 rounded-[2.5rem] shadow-inner relative group cursor-pointer overflow-hidden border border-black/5 flex items-center justify-center p-8"
                                                 style={{ backgroundColor: featured[3].hex }}
                                             >
                                                 <div className="results-screen__bento-overlay absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+
+                                                <CopiedOverlay show={copiedHex === featured[3].hex} isDark={featured[3].isDark} />
+
+                                                <div className="absolute top-8 left-8 transition-all lg:opacity-0 lg:group-hover:opacity-40 opacity-40 z-10">
+                                                    <div className={`p-4 rounded-[1.5rem] ${featured[3].isDark ? 'bg-white/10' : 'bg-black/5'} backdrop-blur-sm lg:bg-transparent`}>
+                                                        <Copy size={24} className={featured[3].isDark ? 'text-white' : 'text-black'} />
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    className="absolute top-8 right-8 p-4 rounded-[1.5rem] transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
+                                                    onClick={(e) => { e.stopPropagation(); setEditingColor({ type: 'featured', index: 3, hex: featured[3].hex }); }}
+                                                    title="Edit Color"
+                                                >
+                                                    <Pipette size={24} className={featured[3].isDark ? 'text-white' : 'text-black'} />
+                                                </div>
                                                 <div className={`results-screen__bento-content text-center relative z-10 ${featured[3].isDark ? 'text-white' : 'text-slate-900'}`}>
-                                                    <h4 className="font-black text-4xl md:text-6xl uppercase tracking-tighter mb-1">{featured[3].hex}</h4>
+                                                    <h4 className="font-black text-2xl md:text-4xl uppercase tracking-tighter mb-1">{featured[3].hex}</h4>
                                                     <p className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Deep Shade</p>
                                                 </div>
                                             </motion.div>
@@ -281,19 +424,20 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                     <div className="results-screen__matrix-section space-y-6 pt-4">
                         <h3 className="results-screen__matrix-title text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 px-2">36-Color Extended Matrix</h3>
                         <div className="results-screen__matrix-container bg-white p-6 md:p-10 rounded-[3rem] shadow-sm border border-slate-100">
-                            <div className="results-screen__matrix-grid flex flex-col gap-3">
-                                {matrix.map((row, rIdx) => (
-                                    <div key={rIdx} className="results-screen__matrix-row grid grid-cols-9 gap-3">
-                                        {row.map((color, cIdx) => (
-                                            <MatrixSwatch
-                                                key={`${rIdx}-${cIdx}`}
-                                                color={color}
-                                                delay={0.1 + (rIdx * 9 + cIdx) * 0.005}
-                                                className="results-screen__matrix-swatch"
-                                            />
-                                        ))}
-                                    </div>
-                                ))}
+                            <div className="results-screen__matrix-grid grid grid-cols-4 md:grid-cols-9 gap-3">
+                                {matrix.flat().map((color, idx) => {
+                                    const rIdx = Math.floor(idx / 9);
+                                    const cIdx = idx % 9;
+                                    return (
+                                        <MatrixSwatch
+                                            key={`${rIdx}-${cIdx}`}
+                                            color={color}
+                                            delay={0.1 + idx * 0.005}
+                                            onEdit={() => setEditingColor({ type: 'matrix', index: [rIdx, cIdx], hex: color.hex })}
+                                            isCopied={copiedHex === color.hex}
+                                        />
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -363,7 +507,10 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                         </div>
 
                         <div className="results-screen__mother-preview pt-6 border-t border-slate-100">
-                            <div className="results-screen__mother-box flex items-center gap-4 p-4 bg-slate-50 rounded-3xl border border-slate-100">
+                            <div
+                                className="results-screen__mother-box flex items-center gap-4 p-4 bg-slate-50 rounded-3xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition-all group"
+                                onClick={() => copyToClipboard(mother.hex)}
+                            >
                                 <div
                                     className="results-screen__mother-swatch w-12 h-12 rounded-2xl shadow-sm border border-black/5"
                                     style={{ backgroundColor: mother.hex }}
@@ -372,7 +519,12 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                     <p className="results-screen__mother-label text-[10px] font-black uppercase tracking-widest text-slate-400">Current Base</p>
                                     <p className="results-screen__mother-hex font-black text-slate-700 uppercase">{mother.hex}</p>
                                 </div>
-                                <Pipette className="results-screen__mother-icon text-slate-300" size={20} />
+                                <div
+                                    className="p-2 rounded-xl hover:bg-slate-200 transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); setEditingColor({ type: 'featured', index: 0, hex: mother.hex }); }}
+                                >
+                                    <Pipette className="results-screen__mother-icon text-slate-400 hover:text-pink-500 transition-colors" size={20} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -445,6 +597,58 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                             >
                                 Cancel
                             </button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Color Picker Modal */}
+            <AnimatePresence>
+                {editingColor && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setEditingColor(null)}
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-[280px] bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-6 flex flex-col items-center"
+                        >
+                            <div className="text-center space-y-1">
+                                <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Refine Color</h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Manual Adjustment</p>
+                            </div>
+
+                            <div className="custom-color-picker w-full">
+                                <HexColorPicker
+                                    color={editingColor.hex}
+                                    onChange={handleColorChange}
+                                    style={{ width: '100%', height: '200px' }}
+                                />
+                            </div>
+
+                            <div className="w-full space-y-4">
+                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="w-8 h-8 rounded-lg shadow-sm" style={{ backgroundColor: editingColor.hex }} />
+                                    <input
+                                        type="text"
+                                        value={editingColor.hex.toUpperCase()}
+                                        onChange={(e) => handleColorChange(e.target.value)}
+                                        className="bg-transparent font-black text-slate-700 uppercase w-full outline-none"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setEditingColor(null)}
+                                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-slate-800 transition-colors shadow-xl active:scale-95"
+                                >
+                                    Done Adjusting
+                                </button>
+                            </div>
                         </motion.div>
                     </div>
                 )}

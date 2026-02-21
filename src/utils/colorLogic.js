@@ -12,6 +12,15 @@ extend([namesPlugin, a11yPlugin, lchPlugin]);
  * @param {string} mode - 'vibrant', 'monochrome', 'analogous', 'tetradic', 'quadratic'
  * @returns {Object} - Object { featured: Array(5), matrix: Array(4) }
  */
+export function resolveColorInfo(hex) {
+    const c = colord(hex);
+    return {
+        hex: c.toHex().toUpperCase(),
+        name: getColorName(c.toHex()),
+        isDark: c.isDark()
+    };
+}
+
 export function getRandomVibrantColor() {
     return colord({
         h: Math.floor(Math.random() * 360),
@@ -130,7 +139,7 @@ export function generatePalette(rootHex, mode = 'vibrant') {
     return { featured, matrix, mode };
 }
 
-function getColorName(hex) {
+export function getColorName(hex) {
     const color = colord(hex);
     const name = color.toName({ closest: true }) || "Unknown";
     const adjectives = ["Vibrant", "Soft", "Deep", "Pure", "Misty", "Royal", "Rich", "Clear"];
