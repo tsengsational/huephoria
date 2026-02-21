@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check, MoreVertical, Grid, Monitor, Pipette, Sparkles, Flame, Trophy, Droplets } from 'lucide-react';
+import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check, MoreVertical, Grid, Monitor, Pipette, Sparkles, Flame, Trophy, Droplets, Brush } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { toPng } from 'html-to-image';
 import { generateW3CTokens, downloadFile, generateProcreateSwatches, generateCSSVariables, generateHexList } from '../utils/exportUtils';
 import UIPlayground from './UIPlayground';
+import PaintMixer from './PaintMixer';
 
 const MatrixSwatch = ({ color, delay = 0, onEdit, isCopied }) => (
     <motion.div
@@ -236,6 +237,13 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                 <Monitor size={18} className="results-screen__toggle-icon" />
                                 <span className="results-screen__toggle-label">UI Preview</span>
                             </button>
+                            <button
+                                onClick={() => setViewMode('mix')}
+                                className={`results-screen__toggle-btn flex items-center gap-3 px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all ${viewMode === 'mix' ? 'results-screen__toggle-btn--active bg-violet-500 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <Brush size={18} className="results-screen__toggle-icon" />
+                                <span className="results-screen__toggle-label">Mix</span>
+                            </button>
                         </div>
                     </div>
 
@@ -406,7 +414,7 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                         </div>
                                     </div>
                                 </motion.div>
-                            ) : (
+                            ) : viewMode === 'ui' ? (
                                 <motion.div
                                     key="ui"
                                     initial={{ opacity: 0, scale: 0.98 }}
@@ -415,6 +423,16 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                     transition={{ duration: 0.2 }}
                                 >
                                     <UIPlayground paletteData={paletteData} />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="mix"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <PaintMixer paletteData={paletteData} />
                                 </motion.div>
                             )}
                         </AnimatePresence>
