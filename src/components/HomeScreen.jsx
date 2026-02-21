@@ -1,9 +1,23 @@
-import React, { useState, useRef } from 'react';
-import { Sparkles, Trophy, Flame, Pipette, Droplets, Palette } from 'lucide-react';
+import React, { useState, useRef, useMemo } from 'react';
+import { Sparkles, Trophy, Flame, Pipette, Droplets, Palette, User, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { generatePalette } from '../utils/colorLogic';
 
 const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) => {
     const fileInputRef = useRef(null);
+
+    // Calculate preview colors based on current selection
+    const previewColors = useMemo(() => {
+        try {
+            const data = generatePalette(motherColor, mode);
+            return {
+                highlight: data.featured[1].hex,
+                lowlight: data.featured[3].hex
+            };
+        } catch (e) {
+            return { highlight: '#86EFAC', lowlight: '#FDE047' }; // Fallbacks
+        }
+    }, [motherColor, mode]);
 
     const modes = [
         { id: 'vibrant', label: 'Vibrant', icon: Sparkles },
@@ -21,16 +35,27 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) 
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-8">
-            {/* Hero Interaction */}
-            <div className="relative">
-                {/* Massive circular container decoration */}
-                <div className="absolute inset-0 bg-pink-100 rounded-full scale-150 blur-3xl opacity-30 -z-10" />
+            {/* Hero Section */}
+            <div className="relative flex flex-col items-center">
+                {/* Massive decorative pink circular container */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 md:w-96 md:h-96 bg-pink-100/50 rounded-full blur-2xl -z-10" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 md:w-80 md:h-80 bg-pink-50 rounded-full -z-10 border border-pink-100" />
 
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-white shadow-2xl flex items-center justify-center p-8 border-4 border-white"
+                    className="relative w-48 h-48 md:w-56 md:h-56 rounded-full bg-white shadow-xl flex items-center justify-center p-4 border-8 border-white"
                 >
+                    {/* Floating accent circles (Dynamic) */}
+                    <motion.div
+                        animate={{ backgroundColor: previewColors.lowlight }}
+                        className="absolute -bottom-2 -left-2 w-12 h-12 rounded-full border-4 border-white shadow-sm transition-colors duration-500"
+                    />
+                    <motion.div
+                        animate={{ backgroundColor: previewColors.highlight }}
+                        className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-4 border-white shadow-sm transition-colors duration-500"
+                    />
+
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -45,13 +70,12 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) 
                             value={motherColor}
                             onChange={(e) => setMotherColor(e.target.value)}
                         />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                            <Pipette className="text-white opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300" size={48} />
+                        {/* Smaller pink circle with white eyedropper icon as trigger */}
+                        <div className="absolute inset-x-0 bottom-0 top-0 m-auto w-12 h-12 bg-pink-500 rounded-full shadow-lg flex items-center justify-center border-2 border-white transform group-hover:scale-110 transition-transform">
+                            <Pipette className="text-white" size={20} />
                         </div>
-                        {/* Visual indicator when not hovered */}
-                        <div className="absolute bottom-6 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-white border border-white/30">
-                            Mother Color
-                        </div>
+
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
                     </motion.div>
                 </motion.div>
             </div>
@@ -94,40 +118,44 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) 
             </div>
 
             {/* Trending Section */}
-            <div className="w-full space-y-6 pt-8">
+            <div className="w-full space-y-6 pt-4">
                 <div className="flex items-center justify-between px-2">
                     <h3 className="font-bold text-lg text-slate-800">Trending Palettes</h3>
                     <button className="text-pink-500 text-sm font-semibold hover:underline">View All</button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
                     {trendingPalettes.map((palette) => (
                         <motion.div
                             key={palette.id}
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
+                            initial={{ y: 20, opacity: 0 }}
+                            whileInView={{ y: 0, opacity: 1 }}
+                            viewport={{ once: true }}
                             transition={{ delay: palette.id * 0.1 }}
-                            className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer group"
+                            className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
                         >
-                            <div className="flex -space-x-2">
-                                {palette.colors.slice(0, 3).map((col, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="w-10 h-10 rounded-full border-2 border-white"
-                                        style={{ backgroundColor: col }}
-                                    />
-                                ))}
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-slate-700 text-sm">{palette.name}</h4>
-                                <div className="flex gap-1 mt-1">
-                                    {palette.colors.map((c, i) => (
-                                        <div key={i} className="w-3 h-1 rounded-full bg-gray-200" style={{ backgroundColor: c }} />
-                                    ))}
+                            {/* Card Header (Avatar + Title + Menu) */}
+                            <div className="p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center border border-pink-200 shadow-sm overflow-hidden">
+                                        <User size={14} className="text-pink-600" />
+                                    </div>
+                                    <h4 className="font-bold text-slate-700 text-sm">{palette.name}</h4>
+                                </div>
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:bg-gray-50 transition-colors">
+                                    <ChevronDown size={14} />
                                 </div>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-slate-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors">
-                                <Pipette size={14} />
+
+                            {/* Horizontal Swatches */}
+                            <div className="flex h-16 w-full mt-auto">
+                                {palette.colors.map((c, i) => (
+                                    <div
+                                        key={i}
+                                        className="flex-1 h-full hover:flex-[1.5] transition-all duration-300"
+                                        style={{ backgroundColor: c }}
+                                    />
+                                ))}
                             </div>
                         </motion.div>
                     ))}

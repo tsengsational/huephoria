@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, LogOut, ChevronDown } from 'lucide-react';
+import { User, LogOut, ChevronDown, Palette, Sparkles, Heart, Compass, Settings } from 'lucide-react';
 import AdBanner from './AdBanner';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
@@ -79,11 +79,42 @@ const Layout = ({ children, onNavigateSaved }) => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col w-full max-w-lg mx-auto p-6 md:p-8 pb-24">
+            <main className="flex-1 flex flex-col w-full max-w-lg mx-auto p-6 md:p-8 pb-48 md:pb-48">
                 {children}
             </main>
 
             <AdBanner />
+
+            {/* Bottom Navigation */}
+            <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 px-8 py-3 flex justify-around items-center z-50">
+                <button className="group flex flex-col items-center gap-1 text-pink-500">
+                    <div className="w-10 h-10 rounded-2xl bg-pink-100 flex items-center justify-center shadow-sm group-active:scale-90 transition-transform">
+                        <Palette size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">Home</span>
+                </button>
+                <button
+                    className="group flex flex-col items-center gap-1 text-slate-400 hover:text-pink-400 transition-colors"
+                    onClick={onNavigateSaved}
+                >
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center group-active:scale-90 transition-transform">
+                        <Heart size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">Saved</span>
+                </button>
+                <button className="group flex flex-col items-center gap-1 text-slate-400 hover:text-pink-400 transition-colors">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center group-active:scale-90 transition-transform">
+                        <Compass size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">Explore</span>
+                </button>
+                <button className="group flex flex-col items-center gap-1 text-slate-400 hover:text-pink-400 transition-colors">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center group-active:scale-90 transition-transform">
+                        <Settings size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">Settings</span>
+                </button>
+            </nav>
 
             <AuthModal
                 isOpen={isAuthModalOpen}

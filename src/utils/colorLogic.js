@@ -1,18 +1,21 @@
 import { colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
 import a11yPlugin from "colord/plugins/a11y";
+import lchPlugin from "colord/plugins/lch"; // colord has LCH plugin which is close to OKLCH but not same.
+// For true OKLCH we might need another approach, but I'll stick to a robust perceptually uniform approach using colord's tools.
 
-extend([namesPlugin, a11yPlugin]);
+extend([namesPlugin, a11yPlugin, lchPlugin]);
 
 /**
- * Generates a professional 36-Color Matrix (9x4 Grid).
+ * Generates an advanced 36-Color Matrix (9x4 Grid) using OKLCH-inspired logic.
  * @param {string} rootHex - The mother color hex string.
- * @param {string} mode - 'monochrome', 'analogous', 'tetradic', 'quadratic'
+ * @param {string} mode - 'vibrant', 'monochrome', 'analogous', 'tetradic', 'quadratic'
  * @returns {Object} - Object { featured: Array(5), matrix: Array(4) }
  */
 export function generatePalette(rootHex, mode = 'vibrant') {
     const root = colord(rootHex);
-    const rootHsl = root.toHsl();
+    // Convert to LCH for perceptual uniformity (Lightness, Chroma, Hue)
+    const rootLch = root.toLch();
 
     const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
 
@@ -21,88 +24,84 @@ export function generatePalette(rootHex, mode = 'vibrant') {
     const hueOffsets = new Array(9).fill(0);
 
     if (mode === 'vibrant') {
-        // The Original Curve (Vibrant)
         for (let i = 0; i < 9; i++) {
             const step = i - 4;
-            hueOffsets[i] = step * 22;
+            hueOffsets[i] = step * 20; // 160 degree sweep
         }
     } else if (mode === 'monochrome') {
-        // Subtle shift for variety in monochrome
         for (let i = 0; i < 9; i++) {
             const step = i - 4;
-            hueOffsets[i] = step * 2; // Very subtle
+            hueOffsets[i] = step * 2; // Very subtle shift
         }
     } else if (mode === 'analogous') {
-        // Glide from -30 to +30
         for (let i = 0; i < 9; i++) {
             const step = i - 4;
-            hueOffsets[i] = step * 7.5; // (-30 to +30)
+            hueOffsets[i] = step * 8; // 64 degree sweep
         }
     } else if (mode === 'tetradic') {
-        // Root (0), 60, 180, 240
-        // Map 9 steps to traverse these points beautifully
-        // -180, -120, -60, -30, 0, 30, 60, 120, 180
+        // Targets: -180, -120, -60, -30, 0, 30, 60, 120, 180
         const targets = [-180, -120, -60, -30, 0, 30, 60, 120, 180];
         targets.forEach((val, idx) => hueOffsets[idx] = val);
     } else if (mode === 'quadratic') {
-        // 0, 90, 180, 270 (-90)
+        // Targets: -180, -135, -90, -45, 0, 45, 90, 135, 180
         const targets = [-180, -135, -90, -45, 0, 45, 90, 135, 180];
         targets.forEach((val, idx) => hueOffsets[idx] = val);
     }
 
-    // --- Step B: Generate the "Spine" (Row 3 - The Anchor) ---
+    // --- Step B: Generate the Main "Spine" (Row 3 - Base Spine) ---
     const spine = [];
     for (let i = 0; i < 9; i++) {
         const step = i - 4;
-        let h = (rootHsl.h + hueOffsets[i] + 360) % 360;
-        let s = rootHsl.s;
-        let l = rootHsl.l;
 
-        // Apply slight brightness/saturation curves even in multi-mode
+        let h = (rootLch.h + hueOffsets[i] + 360) % 360;
+        let c = rootLch.c;
+        let l = rootLch.l;
+
+        // Apply Lightness/Chroma curves
         if (step < 0) {
             const mag = Math.abs(step);
-            l = clamp(l + mag * 5, 0, 100);
-            s = clamp(s - mag * 5, 0, 100);
+            l = clamp(l + mag * 6, 0, 100);
+            c = clamp(c - mag * 5, 0, 100);
         } else if (step > 0) {
-            l = clamp(l - step * 5, 0, 100);
-            s = clamp(s + step * 5, 0, 100);
+            l = clamp(l - step * 6, 0, 100);
+            c = clamp(c + step * 5, 0, 100);
         }
 
-        spine.push(colord({ h, s, l }));
+        spine.push(colord({ l, c, h }));
     }
 
-    // --- Step C: Generate the Matrix ---
+    // --- Step C: Generate the 4-Row Matrix ---
     const rawMatrix = [[], [], [], []];
 
-    spine.forEach((baseColor) => {
-        const hsl = baseColor.toHsl();
+    spine.forEach((base) => {
+        const lch = base.toLch();
 
-        // Row 1 (Index 0): Highlights (L +20%, S -10%, H -5°)
+        // Row 1: Highlights (Lightness +25, Chroma -15, Hue shift)
         rawMatrix[0].push(colord({
-            h: (hsl.h - 5 + 360) % 360,
-            s: clamp(hsl.s - 10, 0, 100),
-            l: clamp(hsl.l + 20, 0, 100)
+            l: clamp(lch.l + 25, 0, 100),
+            c: clamp(lch.c - 15, 0, 100),
+            h: (lch.h - 5 + 360) % 360
         }));
 
-        // Row 2 (Index 1): Muted (L +5%, S -15%, H +0°)
+        // Row 2: Muted (Lightness +5, Chroma -25)
         rawMatrix[1].push(colord({
-            h: hsl.h,
-            s: clamp(hsl.s - 15, 0, 100),
-            l: clamp(hsl.l + 5, 0, 100)
+            l: clamp(lch.l + 5, 0, 100),
+            c: clamp(lch.c - 25, 0, 100),
+            h: lch.h
         }));
 
-        // Row 3 (Index 2): Base Spine
-        rawMatrix[2].push(baseColor);
+        // Row 3: Base Spine
+        rawMatrix[2].push(base);
 
-        // Row 4 (Index 3): Deep Shadows (L -20%, S +15%, H +10°)
+        // Row 4: Deep Shadows (Lightness -25, Chroma +10)
         rawMatrix[3].push(colord({
-            h: (hsl.h + 10) % 360,
-            s: clamp(hsl.s + 15, 0, 100),
-            l: clamp(hsl.l - 20, 0, 100)
+            l: clamp(lch.l - 25, 0, 100),
+            c: clamp(lch.c + 10, 0, 100),
+            h: (lch.h + 5) % 360
         }));
     });
 
-    // --- Step D: Format and Naming ---
+    // --- Step D: Format for UI ---
     const matrix = rawMatrix.map(row =>
         row.map(c => ({
             hex: c.toHex().toUpperCase(),
@@ -111,29 +110,22 @@ export function generatePalette(rootHex, mode = 'vibrant') {
         }))
     );
 
+    // Pick featured colors for the Mother/Bento Grid
     const featured = [
-        matrix[2][4], // Mother
-        matrix[0][1], // Lightest
-        matrix[1][3], // Vibrant
-        matrix[3][7], // Contrast
-        matrix[2][6], // Pop
+        matrix[2][4], // Mother Color (Center of Spine)
+        matrix[0][2], // Highlight Square
+        matrix[1][3], // Muted Square (Mid-Left)
+        matrix[3][6], // Deep Rectangle (Spanning)
+        matrix[0][7], // Special Detail Square
     ];
 
     return { featured, matrix, mode };
 }
 
-export function generateArcPalette(rootHex) {
-    const result = generatePalette(rootHex);
-    return result.featured; // Legacy support for 5-color array
-}
-
 function getColorName(hex) {
     const color = colord(hex);
-    const name = color.toName({ closest: true }) || "Untold Color";
-
-    const adjectives = ["Vibrant", "Soft", "Deep", "Electric", "Misty", "Royal", "Sunset", "Ocean"];
+    const name = color.toName({ closest: true }) || "Unknown";
+    const adjectives = ["Vibrant", "Soft", "Deep", "Pure", "Misty", "Royal", "Rich", "Clear"];
     const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-
-    const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
-    return `${randomAdj} ${formattedName}`;
+    return `${randomAdj} ${name.charAt(0).toUpperCase() + name.slice(1)}`;
 }
