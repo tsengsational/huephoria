@@ -4,7 +4,7 @@ import Layout from './components/Layout';
 import HomeScreen from './components/HomeScreen';
 import ResultsScreen from './components/ResultsScreen';
 import SavedPalettes from './components/SavedPalettes';
-import { generatePalette, getRandomVibrantColor } from './utils/colorLogic';
+import { generatePalette, getRandomVibrantColor, resolveColorInfo } from './utils/colorLogic';
 
 function App() {
   const [motherColor, setMotherColor] = useState(getRandomVibrantColor());
@@ -29,6 +29,39 @@ function App() {
     setMode(newMode);
     const data = generatePalette(motherColor, newMode);
     setPaletteData(data);
+  };
+
+  const handleUpdatePaletteColor = (type, index, newHex) => {
+    if (!paletteData) return;
+
+    const updatedColor = resolveColorInfo(newHex);
+    let newPaletteData = { ...paletteData };
+
+    if (type === 'matrix') {
+      const [r, c] = index;
+      const oldHex = newPaletteData.matrix[r][c].hex;
+
+      // Update matrix
+      newPaletteData.matrix = [...newPaletteData.matrix];
+      newPaletteData.matrix[r] = [...newPaletteData.matrix[r]];
+      newPaletteData.matrix[r][c] = updatedColor;
+
+      // Sync featured if it was a reference
+      newPaletteData.featured = newPaletteData.featured.map(f => f.hex === oldHex ? updatedColor : f);
+    } else if (type === 'featured') {
+      const oldHex = newPaletteData.featured[index].hex;
+
+      // Update featured
+      newPaletteData.featured = [...newPaletteData.featured];
+      newPaletteData.featured[index] = updatedColor;
+
+      // Sync matrix
+      newPaletteData.matrix = newPaletteData.matrix.map(row =>
+        row.map(cell => cell.hex === oldHex ? updatedColor : cell)
+      );
+    }
+
+    setPaletteData(newPaletteData);
   };
 
   const handleSelectSaved = (data) => {
@@ -82,6 +115,7 @@ function App() {
               currentMode={mode}
               onRegenerate={handleRegenerate}
               onModeChange={handleModeChange}
+              onUpdateColor={handleUpdatePaletteColor}
               onBack={() => setScreen('home')}
             />
           </motion.div>
