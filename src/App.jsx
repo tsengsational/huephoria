@@ -4,10 +4,10 @@ import Layout from './components/Layout';
 import HomeScreen from './components/HomeScreen';
 import ResultsScreen from './components/ResultsScreen';
 import SavedPalettes from './components/SavedPalettes';
-import { generatePalette } from './utils/colorLogic';
+import { generatePalette, getRandomVibrantColor } from './utils/colorLogic';
 
 function App() {
-  const [motherColor, setMotherColor] = useState('#EC4899'); // Pink-500 default
+  const [motherColor, setMotherColor] = useState(getRandomVibrantColor());
   const [mode, setMode] = useState('vibrant');
   const [screen, setScreen] = useState('home');
   const [paletteData, setPaletteData] = useState(null);
@@ -19,7 +19,15 @@ function App() {
   };
 
   const handleRegenerate = () => {
-    const data = generatePalette(motherColor, mode);
+    const newColor = getRandomVibrantColor();
+    setMotherColor(newColor);
+    const data = generatePalette(newColor, mode);
+    setPaletteData(data);
+  };
+
+  const handleModeChange = (newMode) => {
+    setMode(newMode);
+    const data = generatePalette(motherColor, newMode);
     setPaletteData(data);
   };
 
@@ -53,6 +61,7 @@ function App() {
               motherColor={motherColor}
               setMotherColor={setMotherColor}
               onGenerate={handleGenerate}
+              onSelect={handleSelectSaved}
               mode={mode}
               setMode={setMode}
             />
@@ -70,7 +79,9 @@ function App() {
           >
             <ResultsScreen
               paletteData={paletteData}
+              currentMode={mode}
               onRegenerate={handleRegenerate}
+              onModeChange={handleModeChange}
               onBack={() => setScreen('home')}
             />
           </motion.div>

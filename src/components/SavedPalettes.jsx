@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, ExternalLink, ArrowLeft, Loader2, Palette, Edit2, Check, X as CloseIcon } from 'lucide-react';
+import { Trash2, ExternalLink, ArrowLeft, Loader2, Palette, Edit2, Check, X as CloseIcon, Globe, Lock } from 'lucide-react';
 import { collection, query, where, orderBy, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
@@ -72,6 +72,18 @@ const SavedPalettes = ({ onBack, onSelect }) => {
             setEditingId(null);
         } catch (err) {
             console.error('Error updating title', err);
+        }
+    };
+
+    const toggleVisibility = async (id, currentStatus, e) => {
+        e.stopPropagation();
+        try {
+            await updateDoc(doc(db, 'palettes', id), {
+                isPublic: !currentStatus
+            });
+            setPalettes(palettes.map(p => p.id === id ? { ...p, isPublic: !currentStatus } : p));
+        } catch (err) {
+            console.error('Error toggling visibility', err);
         }
     };
 
@@ -156,9 +168,14 @@ const SavedPalettes = ({ onBack, onSelect }) => {
                                                     <h4 className="saved-palettes__card-title font-black text-slate-800 truncate text-lg">
                                                         {palette.title || palette.motherName || palette.motherHex}
                                                     </h4>
-                                                    <p className="saved-palettes__card-subtitle text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                        {palette.motherHex} • {palette.data.mode}
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="saved-palettes__card-subtitle text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                            {palette.motherHex} • {palette.data.mode}
+                                                        </p>
+                                                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${palette.isPublic !== false ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                            {palette.isPublic !== false ? 'Public' : 'Private'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -172,6 +189,13 @@ const SavedPalettes = ({ onBack, onSelect }) => {
                                                         title="Rename"
                                                     >
                                                         <Edit2 size={16} className="saved-palettes__action-icon" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => toggleVisibility(palette.id, palette.isPublic !== false, e)}
+                                                        className={`saved-palettes__action-btn p-2 rounded-xl transition-colors ${palette.isPublic !== false ? 'text-green-500 hover:bg-green-50' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'}`}
+                                                        title={palette.isPublic !== false ? 'Make Private' : 'Make Public'}
+                                                    >
+                                                        {palette.isPublic !== false ? <Globe size={16} /> : <Lock size={16} />}
                                                     </button>
                                                     <button
                                                         onClick={(e) => handleDelete(palette.id, e)}

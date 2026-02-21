@@ -1,11 +1,17 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { Sparkles, Trophy, Flame, Pipette, Droplets, Palette, User, ChevronDown, Check, X } from 'lucide-react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { Sparkles, Trophy, Flame, Pipette, Droplets, Palette, User, ChevronDown, Check, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
+import { collection, query, where, orderBy, limit, getDocs, updateDoc, doc, increment, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 import { generatePalette } from '../utils/colorLogic';
 
-const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) => {
+const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, setMode }) => {
     const [showPicker, setShowPicker] = useState(false);
+    const [palettes, setPalettes] = useState([]);
+    const [loadingPalettes, setLoadingPalettes] = useState(true);
+    const { user } = useAuth();
     const fileInputRef = useRef(null);
 
     // Calculate preview colors based on current selection
@@ -29,11 +35,59 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) 
         { id: 'quadratic', label: 'Quad', icon: Sparkles },
     ];
 
-    const trendingPalettes = [
-        { id: 1, name: "Sunset Dreams", colors: ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#F47C7C"] },
-        { id: 2, name: "Minty Fresh", colors: ["#00F5FF", "#7161EF", "#FF595E", "#FFCA3A", "#8AC926"] },
-        { id: 3, name: "Candy Crush", colors: ["#F94144", "#F3722C", "#F8961E", "#F9C74F", "#90BE6D"] },
-    ];
+    useEffect(() => {
+        const fetchTrending = async () => {
+            try {
+                const q = query(
+                    collection(db, 'palettes'),
+                    where('isPublic', '==', true),
+                    orderBy('likes', 'desc'),
+                    limit(6)
+                );
+                const querySnapshot = await getDocs(q);
+                const fetched = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    colors: doc.data().data.featured.map(c => c.hex)
+                }));
+                setPalettes(fetched);
+            } catch (err) {
+                console.error('Error fetching trending palettes:', err);
+            } finally {
+                setLoadingPalettes(false);
+            }
+        };
+
+        fetchTrending();
+    }, []);
+
+    const handleLike = async (paletteId, e) => {
+        e.stopPropagation();
+        if (!user) {
+            alert('Please sign in to upvote palettes!');
+            return;
+        }
+
+        try {
+            const likeRef = doc(db, 'palettes', paletteId, 'likes', user.uid);
+            const paletteRef = doc(db, 'palettes', paletteId);
+
+            // Using setDoc to track uniqueness of likes per user
+            // In a production app, we'd use a transaction or move this to a Cloud Function
+            // to ensure atomicity, but for now we'll do this:
+            await setDoc(likeRef, { likedAt: new Date() });
+            await updateDoc(paletteRef, {
+                likes: increment(1)
+            });
+
+            // Optimistic update
+            setPalettes(prev => prev.map(p =>
+                p.id === paletteId ? { ...p, likes: (p.likes || 0) + 1 } : p
+            ));
+        } catch (err) {
+            console.error('Error liking palette:', err);
+        }
+    };
 
     return (
         <div className="home-screen flex-1 flex flex-col space-y-12">
@@ -67,7 +121,10 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) 
                                 className="home-screen__picker-trigger w-full h-full rounded-full cursor-pointer shadow-inner relative group flex items-center justify-center overflow-hidden"
                                 style={{ backgroundColor: motherColor }}
                             >
-                                <div className="home-screen__picker-icon-box absolute inset-x-0 bottom-0 top-0 m-auto w-12 h-12 lg:w-16 lg:h-16 bg-pink-500 rounded-full shadow-lg flex items-center justify-center border-2 border-white transform group-hover:scale-110 transition-transform">
+                                <div
+                                    className="home-screen__picker-icon-box absolute inset-x-0 bottom-0 top-0 m-auto w-12 h-12 lg:w-16 lg:h-16 rounded-full shadow-lg flex items-center justify-center border-2 border-white transform group-hover:scale-110 transition-all duration-500"
+                                    style={{ backgroundColor: motherColor }}
+                                >
                                     <Pipette className="home-screen__picker-icon text-white" size={20} />
                                 </div>
                                 <div className="home-screen__picker-overlay absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
@@ -121,37 +178,59 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, mode, setMode }) 
                     </div>
 
                     <div className="home-screen__trending-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-                        {trendingPalettes.map((palette) => (
-                            <motion.div
-                                key={palette.id}
-                                initial={{ y: 20, opacity: 0 }}
-                                whileInView={{ y: 0, opacity: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: palette.id * 0.1 }}
-                                className="home-screen__palette-card bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer group flex flex-col"
-                            >
-                                <div className="home-screen__palette-card-header p-5 flex items-center justify-between">
-                                    <div className="home-screen__palette-user-box flex items-center gap-4">
-                                        <div className="home-screen__palette-avatar w-10 h-10 rounded-2xl bg-pink-50 flex items-center justify-center border border-pink-100 shadow-sm overflow-hidden text-pink-500">
-                                            <User size={16} />
+                        {loadingPalettes ? (
+                            <div className="flex justify-center py-20">
+                                <Loader2 className="animate-spin text-slate-300" size={32} />
+                            </div>
+                        ) : palettes.length === 0 ? (
+                            <div className="text-center py-20 text-slate-400 font-medium">
+                                No public palettes yet. Be the first!
+                            </div>
+                        ) : (
+                            palettes.map((palette, idx) => (
+                                <motion.div
+                                    key={palette.id}
+                                    initial={{ y: 20, opacity: 0 }}
+                                    whileInView={{ y: 0, opacity: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    onClick={() => onSelect(palette.data)}
+                                    className="home-screen__palette-card bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer group flex flex-col"
+                                >
+                                    <div className="home-screen__palette-card-header p-5 flex items-center justify-between">
+                                        <div className="home-screen__palette-user-box flex items-center gap-4">
+                                            <div className="home-screen__palette-avatar w-10 h-10 rounded-2xl bg-pink-50 flex items-center justify-center border border-pink-100 shadow-sm overflow-hidden text-pink-500">
+                                                <User size={16} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <h4 className="home-screen__palette-name font-black text-slate-700 leading-tight">
+                                                    {palette.title || palette.motherName || 'Untitled'}
+                                                </h4>
+                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                                    {palette.data.mode} • {palette.motherHex}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <h4 className="home-screen__palette-name font-black text-slate-700">{palette.name}</h4>
+                                        <button
+                                            onClick={(e) => handleLike(palette.id, e)}
+                                            className="home-screen__palette-like-btn flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 text-slate-400 group/like hover:bg-pink-50 hover:text-pink-500 transition-all"
+                                        >
+                                            <Flame size={16} className="group-hover/like:scale-125 transition-transform" />
+                                            <span className="text-xs font-black">{palette.likes || 0}</span>
+                                        </button>
                                     </div>
-                                    <div className="home-screen__palette-chevron w-10 h-10 rounded-2xl flex items-center justify-center text-slate-300 hover:bg-gray-50 transition-colors">
-                                        <ChevronDown size={16} />
+                                    <div className="home-screen__palette-swatches flex h-16 w-full mt-auto">
+                                        {palette.colors.map((c, i) => (
+                                            <div
+                                                key={i}
+                                                className="home-screen__palette-swatch flex-1 h-full hover:flex-[1.5] transition-all duration-500"
+                                                style={{ backgroundColor: c }}
+                                            />
+                                        ))}
                                     </div>
-                                </div>
-                                <div className="home-screen__palette-swatches flex h-16 w-full mt-auto">
-                                    {palette.colors.map((c, i) => (
-                                        <div
-                                            key={i}
-                                            className="home-screen__palette-swatch flex-1 h-full hover:flex-[1.5] transition-all duration-500"
-                                            style={{ backgroundColor: c }}
-                                        />
-                                    ))}
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

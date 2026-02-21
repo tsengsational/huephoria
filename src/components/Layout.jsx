@@ -86,7 +86,7 @@ const Layout = ({ children, onNavigateSaved }) => {
             <AdBanner />
 
             {/* Bottom Navigation */}
-            <nav className="layout__nav-bottom fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 px-8 py-3 flex justify-around items-center z-50">
+            <nav className="layout__nav-bottom fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 px-8 py-3 flex justify-around items-center z-50 lg:hidden">
                 <button className="layout__nav-item layout__nav-item--active group flex flex-col items-center gap-1 text-pink-500">
                     <div className="layout__nav-icon-circle w-10 h-10 rounded-2xl bg-pink-100 flex items-center justify-center shadow-sm group-active:scale-90 transition-transform">
                         <Palette size={20} />

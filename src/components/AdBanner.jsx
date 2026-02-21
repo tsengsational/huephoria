@@ -25,7 +25,7 @@ const AdBanner = ({ slot }) => {
     }, [slot]);
 
     return (
-        <div className="ad-banner fixed bottom-[72px] left-0 right-0 z-[40] flex justify-center bg-white/80 backdrop-blur-md border-t border-gray-100 p-1 md:p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <div className="ad-banner fixed bottom-[72px] lg:bottom-0 left-0 right-0 z-[40] flex justify-center bg-white/80 backdrop-blur-md border-t border-gray-100 p-1 md:p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
             <div className="ad-banner__container w-full flex justify-center items-center h-[50px] md:h-[60px]">
                 <ins
                     className="ad-banner__ins adsbygoogle"

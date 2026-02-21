@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rules for the 'palettes' collection
+    match /palettes/{paletteId} {
+      
+      // 1. PUBLIC READ: Anyone can read palettes marked as public
+      allow read: if resource.data.isPublic == true;
+      
+      // 2. OWNER READ: Owners can read their own palettes (even if private)
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // 3. CREATE: Authenticated users can create palettes with their UID
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      
+      // 4. UPDATE/DELETE: Only owners can delete or fully update their palettes
+      // Special Rule: Anyone can update ONLY the 'likes' field for public palettes
+      allow update: if (request.auth != null && request.auth.uid == resource.data.userId) ||
+                     (resource.data.isPublic == true && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
+      
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // 5. LIKES SUB-COLLECTION: Track unique likes per user
+      match /likes/{userId} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Default: Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

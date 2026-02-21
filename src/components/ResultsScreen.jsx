@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check, MoreVertical, Grid, Monitor, Pipette, Sparkles } from 'lucide-react';
+import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check, MoreVertical, Grid, Monitor, Pipette, Sparkles, Flame, Trophy, Droplets } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -25,7 +25,7 @@ const MatrixSwatch = ({ color, delay = 0 }) => (
     </motion.div>
 );
 
-const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
+const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, onBack }) => {
     const exportRef = useRef(null);
     const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'ui'
     const [isExporting, setIsExporting] = useState(false);
@@ -115,6 +115,8 @@ const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
                 data: { ...paletteData, matrix: paletteData.matrix.flat() },
                 motherHex: mother.hex,
                 motherName: mother.name,
+                isPublic: true,
+                likes: 0,
                 createdAt: serverTimestamp(),
             });
             setSaveSuccess(true);
@@ -206,40 +208,56 @@ const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
                                     {/* HARMONIOUS TONES Bento Grid */}
                                     <div className="results-screen__bento-section space-y-6">
                                         <h3 className="results-screen__bento-title text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 px-2">Harmonious Tones</h3>
-                                        <div className="results-screen__bento-grid grid grid-cols-2 md:grid-cols-4 gap-4 h-[500px] md:h-[300px]">
+                                        <div className="results-screen__bento-grid grid grid-cols-2 md:grid-cols-4 gap-4 h-[600px] md:h-[400px]">
+                                            {/* Highlight Card */}
                                             <motion.div
                                                 whileHover={{ flex: 1.5 }}
                                                 onClick={() => copyToClipboard(featured[1].hex)}
-                                                className="results-screen__bento-card col-span-2 md:col-span-1 rounded-[2.5rem] shadow-inner relative group cursor-pointer overflow-hidden border border-black/5"
+                                                className="results-screen__bento-card col-span-2 md:col-span-1 rounded-[2.5rem] shadow-inner relative group cursor-pointer overflow-hidden border border-black/5 flex flex-col justify-end p-8"
                                                 style={{ backgroundColor: featured[1].hex }}
                                             >
                                                 <div className="results-screen__bento-overlay absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-                                                <div className={`results-screen__bento-hex absolute bottom-6 left-6 font-black text-sm ${featured[1].isDark ? 'text-white' : 'text-slate-900'}`}>
-                                                    {featured[1].hex}
+                                                <div className={`results-screen__bento-content relative z-10 ${featured[1].isDark ? 'text-white' : 'text-slate-900'}`}>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Highlight</p>
+                                                    <h4 className="font-black text-xl uppercase">{featured[1].hex}</h4>
                                                 </div>
                                             </motion.div>
 
                                             <div className="results-screen__bento-subgrid col-span-1 grid grid-rows-2 gap-4">
+                                                {/* Muted Card */}
                                                 <motion.div
                                                     onClick={() => copyToClipboard(featured[2].hex)}
-                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-transform"
+                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-end p-6"
                                                     style={{ backgroundColor: featured[2].hex }}
-                                                />
+                                                >
+                                                    <div className={`results-screen__bento-content ${featured[2].isDark ? 'text-white' : 'text-slate-900'}`}>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Muted</p>
+                                                        <h4 className="font-black text-xs uppercase">{featured[2].hex}</h4>
+                                                    </div>
+                                                </motion.div>
+                                                {/* Accent Card */}
                                                 <motion.div
                                                     onClick={() => copyToClipboard(featured[4].hex)}
-                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-transform"
+                                                    className="results-screen__bento-card rounded-[2rem] shadow-inner border border-black/5 cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-end p-6"
                                                     style={{ backgroundColor: featured[4].hex }}
-                                                />
+                                                >
+                                                    <div className={`results-screen__bento-content ${featured[4].isDark ? 'text-white' : 'text-slate-900'}`}>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Accent</p>
+                                                        <h4 className="font-black text-xs uppercase">{featured[4].hex}</h4>
+                                                    </div>
+                                                </motion.div>
                                             </div>
 
+                                            {/* Deep Shade Card */}
                                             <motion.div
                                                 onClick={() => copyToClipboard(featured[3].hex)}
-                                                className="results-screen__bento-card col-span-1 md:col-span-2 rounded-[2.5rem] shadow-inner relative group cursor-pointer overflow-hidden border border-black/5"
+                                                className="results-screen__bento-card col-span-1 md:col-span-2 rounded-[2.5rem] shadow-inner relative group cursor-pointer overflow-hidden border border-black/5 flex items-center justify-center"
                                                 style={{ backgroundColor: featured[3].hex }}
                                             >
                                                 <div className="results-screen__bento-overlay absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-                                                <div className={`results-screen__bento-label absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl md:text-5xl uppercase tracking-tighter opacity-15 ${featured[3].isDark ? 'text-white' : 'text-slate-900'}`}>
-                                                    Highlight
+                                                <div className={`results-screen__bento-content text-center relative z-10 ${featured[3].isDark ? 'text-white' : 'text-slate-900'}`}>
+                                                    <h4 className="font-black text-4xl md:text-6xl uppercase tracking-tighter mb-1">{featured[3].hex}</h4>
+                                                    <p className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Deep Shade</p>
                                                 </div>
                                             </motion.div>
                                         </div>
@@ -287,6 +305,33 @@ const ResultsScreen = ({ paletteData, onRegenerate, onBack }) => {
                         <div className="results-screen__sidebar-header space-y-1">
                             <h4 className="results-screen__sidebar-title font-black text-xl text-slate-800">Palette Actions</h4>
                             <p className="results-screen__sidebar-desc text-slate-400 text-sm font-bold">Save or export your creation</p>
+                        </div>
+
+                        {/* Mode Switcher */}
+                        <div className="results-screen__mode-switcher space-y-3 pb-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Harmony Logic</p>
+                            <div className="grid grid-cols-5 gap-1.5 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                                {[
+                                    { id: 'vibrant', icon: Sparkles },
+                                    { id: 'monochrome', icon: Droplets },
+                                    { id: 'analogous', icon: Flame },
+                                    { id: 'tetradic', icon: Trophy },
+                                    { id: 'quadratic', icon: Sparkles },
+                                ].map((m) => {
+                                    const Icon = m.icon;
+                                    const isActive = currentMode === m.id;
+                                    return (
+                                        <button
+                                            key={m.id}
+                                            onClick={() => onModeChange(m.id)}
+                                            className={`p-2 rounded-xl flex items-center justify-center transition-all ${isActive ? 'bg-white text-pink-500 shadow-sm' : 'text-slate-300 hover:text-slate-500'}`}
+                                            title={m.id.charAt(0).toUpperCase() + m.id.slice(1)}
+                                        >
+                                            <Icon size={18} />
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         <div className="results-screen__action-group space-y-4">

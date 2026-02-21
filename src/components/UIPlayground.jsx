@@ -7,24 +7,29 @@ const UIPlayground = ({ paletteData }) => {
 
     // Dynamic Theme Mapping
     const themeStyles = useMemo(() => {
-        const mother = featured[0].hex;
-        const highlight = featured[3].hex;
-        const lowlight = featured[1].hex;
-        const accent = featured[4].hex;
-        const neutral = featured[2].hex;
+        const mother = featured[0];
+        const highlight = featured[1];
+        const muted = featured[2];
+        const deep = featured[3];
+        const accent = featured[4];
 
         return {
-            '--mock-primary': mother,
-            '--mock-primary-soft': `${mother}20`, // 12% opacity
+            '--mock-primary': mother.hex,
+            '--mock-primary-soft': `${mother.hex}20`,
             '--mock-bg': '#F8FAFC',
             '--mock-surface': '#FFFFFF',
-            '--mock-text': lowlight,
-            '--mock-muted': `${lowlight}80`,
-            '--mock-accent': accent,
-            '--mock-accent-soft': `${accent}15`,
-            '--mock-highlight': highlight,
-            '--mock-neutral': neutral,
-            '--mock-border': 'rgba(0,0,0,0.06)'
+            '--mock-text': deep.hex,
+            '--mock-muted': `${deep.hex}80`,
+            '--mock-accent': accent.hex,
+            '--mock-accent-soft': `${accent.hex}15`,
+            '--mock-highlight': mother.hex,
+            '--mock-on-highlight': mother.isDark ? '#FFFFFF' : '#0F172A',
+            '--mock-neutral': muted.hex,
+            '--mock-border': 'rgba(0,0,0,0.06)',
+            '--featured-1': highlight.hex,
+            '--featured-2': muted.hex,
+            '--featured-3': deep.hex,
+            '--featured-4': accent.hex,
         };
     }, [featured]);
 
@@ -124,7 +129,7 @@ const UIPlayground = ({ paletteData }) => {
                         </div>
 
                         {/* Large Action Card */}
-                        <div className="ui-playground__action-card bg-[var(--mock-highlight)] p-8 md:p-10 rounded-[2.5rem] text-white flex flex-col justify-between h-56 md:h-64 relative overflow-hidden shadow-2xl shadow-[var(--mock-highlight)]/30 group">
+                        <div className="ui-playground__action-card bg-[var(--mock-highlight)] p-8 md:p-10 rounded-[2.5rem] text-[var(--mock-on-highlight)] flex flex-col justify-between h-56 md:h-64 relative overflow-hidden shadow-2xl shadow-[var(--mock-highlight)]/30 group">
                             <div className="ui-playground__action-decoration ui-playground__action-decoration--top absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700" />
                             <div className="ui-playground__action-decoration ui-playground__action-decoration--bottom absolute -bottom-10 -left-10 w-40 h-40 bg-black/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700" />
 
@@ -136,10 +141,14 @@ const UIPlayground = ({ paletteData }) => {
                             <div className="ui-playground__action-footer relative flex justify-between items-center">
                                 <div className="ui-playground__action-avatars flex -space-x-3">
                                     {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="ui-playground__action-avatar-placeholder w-10 h-10 rounded-full border-2 border-[var(--mock-highlight)] bg-white/20 backdrop-blur-md shadow-lg" />
+                                        <div
+                                            key={i}
+                                            className="ui-playground__action-avatar-placeholder w-10 h-10 rounded-full border-2 border-[var(--mock-highlight)] shadow-lg"
+                                            style={{ backgroundColor: `var(--featured-${i})` }}
+                                        />
                                     ))}
                                 </div>
-                                <button className="ui-playground__action-btn bg-white text-[var(--mock-highlight)] text-xs md:text-sm font-black px-6 py-3 rounded-2xl shadow-xl hover:scale-105 transition-transform active:scale-95">
+                                <button className="ui-playground__action-btn bg-[var(--mock-on-highlight)] text-[var(--mock-highlight)] text-xs md:text-sm font-black px-6 py-3 rounded-2xl shadow-xl hover:scale-105 transition-transform active:scale-95">
                                     Launch Matrix
                                 </button>
                             </div>

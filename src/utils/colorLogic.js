@@ -12,6 +12,14 @@ extend([namesPlugin, a11yPlugin, lchPlugin]);
  * @param {string} mode - 'vibrant', 'monochrome', 'analogous', 'tetradic', 'quadratic'
  * @returns {Object} - Object { featured: Array(5), matrix: Array(4) }
  */
+export function getRandomVibrantColor() {
+    return colord({
+        h: Math.floor(Math.random() * 360),
+        s: 70 + Math.random() * 20,
+        l: 55 + Math.random() * 10
+    }).toHex().toUpperCase();
+}
+
 export function generatePalette(rootHex, mode = 'vibrant') {
     const root = colord(rootHex);
     // Convert to LCH for perceptual uniformity (Lightness, Chroma, Hue)
