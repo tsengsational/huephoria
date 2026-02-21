@@ -110,7 +110,7 @@ const SavedPalettes = ({ onBack, onSelect }) => {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <AnimatePresence>
                         {palettes.map((palette, idx) => (
                             <motion.div
@@ -120,77 +120,87 @@ const SavedPalettes = ({ onBack, onSelect }) => {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ delay: idx * 0.05 }}
                                 onClick={() => editingId !== palette.id && onSelect({ ...palette.data, title: palette.title })}
-                                className={`bg-white p-4 rounded-3xl shadow-sm border transition-all group relative overflow-hidden ${editingId === palette.id ? 'border-pink-300 ring-2 ring-pink-500/10' : 'border-gray-100 hover:shadow-md cursor-pointer'}`}
+                                className={`bg-white rounded-[2rem] shadow-sm border transition-all group relative overflow-hidden flex flex-col ${editingId === palette.id ? 'border-pink-300 ring-4 ring-pink-500/5' : 'border-slate-100 hover:shadow-2xl hover:scale-[1.02] cursor-pointer'}`}
                             >
-                                <div className="flex items-center gap-4">
-                                    {/* Mini Preview */}
-                                    <div className="flex -space-x-2 shrink-0">
-                                        {palette.data.featured.slice(0, 4).map((color, i) => (
+                                <div className="p-6 flex-1 flex flex-col space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1 min-w-0">
+                                            {editingId === palette.id ? (
+                                                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                                    <input
+                                                        autoFocus
+                                                        type="text"
+                                                        value={editValue}
+                                                        onChange={e => setEditValue(e.target.value)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') saveEdit(palette.id, palette.motherName, e);
+                                                            if (e.key === 'Escape') cancelEditing(e);
+                                                        }}
+                                                        className="w-full px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-pink-500"
+                                                    />
+                                                    <button
+                                                        onClick={e => saveEdit(palette.id, palette.motherName, e)}
+                                                        className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                                                    >
+                                                        <Check size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={cancelEditing}
+                                                        className="p-1.5 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300"
+                                                    >
+                                                        <CloseIcon size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <h4 className="font-black text-slate-800 truncate text-lg">
+                                                        {palette.title || palette.motherName || palette.motherHex}
+                                                    </h4>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                        {palette.motherHex} • {palette.data.mode}
+                                                    </p>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <div className={`flex items-center gap-1 transition-opacity ${editingId === palette.id ? 'opacity-100' : 'opacity-0 lg:opacity-0 lg:group-hover:opacity-100'}`}>
+                                            {editingId !== palette.id && (
+                                                <>
+                                                    <button
+                                                        onClick={(e) => startEditing(palette, e)}
+                                                        className="p-2 rounded-xl text-slate-300 hover:text-pink-500 hover:bg-pink-50 transition-colors"
+                                                        title="Rename"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDelete(palette.id, e)}
+                                                        className="p-2 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Swatches Row */}
+                                    <div className="flex h-12 w-full rounded-2xl overflow-hidden shadow-inner border border-black/5">
+                                        {palette.data.featured.slice(0, 5).map((color, i) => (
                                             <div
                                                 key={i}
-                                                className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                                                className="flex-1 h-full hover:flex-[1.5] transition-all duration-300"
                                                 style={{ backgroundColor: color.hex }}
+                                                title={color.hex}
                                             />
                                         ))}
                                     </div>
+                                </div>
 
-                                    <div className="flex-1 min-w-0">
-                                        {editingId === palette.id ? (
-                                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                                <input
-                                                    autoFocus
-                                                    type="text"
-                                                    value={editValue}
-                                                    onChange={e => setEditValue(e.target.value)}
-                                                    onKeyDown={e => {
-                                                        if (e.key === 'Enter') saveEdit(palette.id, palette.motherName, e);
-                                                        if (e.key === 'Escape') cancelEditing(e);
-                                                    }}
-                                                    className="w-full px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-pink-500"
-                                                />
-                                                <button
-                                                    onClick={e => saveEdit(palette.id, palette.motherName, e)}
-                                                    className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                                                >
-                                                    <Check size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={cancelEditing}
-                                                    className="p-1.5 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300"
-                                                >
-                                                    <CloseIcon size={14} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <h4 className="font-bold text-slate-800 truncate">{palette.title || palette.motherName || palette.motherHex}</h4>
-                                                <p className="text-xs text-slate-400 font-medium">{palette.motherHex}</p>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    <div className={`flex items-center gap-2 transition-opacity ${editingId === palette.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        {editingId !== palette.id && (
-                                            <>
-                                                <button
-                                                    onClick={(e) => startEditing(palette, e)}
-                                                    className="p-2 rounded-xl text-slate-400 hover:text-pink-500 hover:bg-pink-50 transition-colors"
-                                                    title="Rename"
-                                                >
-                                                    <Edit2 size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleDelete(palette.id, e)}
-                                                    className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                                <div className="p-2 rounded-xl text-pink-500 bg-pink-50">
-                                                    <ExternalLink size={18} />
-                                                </div>
-                                            </>
-                                        )}
+                                <div className="absolute top-2 right-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-lg border border-white">
+                                        <ExternalLink size={14} className="text-pink-500" />
                                     </div>
                                 </div>
                             </motion.div>

@@ -79,7 +79,7 @@ const Layout = ({ children, onNavigateSaved }) => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col w-full max-w-lg mx-auto p-6 md:p-8 pb-48 md:pb-48">
+            <main className="flex-1 flex flex-col w-full max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto p-6 md:p-12 pb-48 md:pb-48">
                 {children}
             </main>
 
