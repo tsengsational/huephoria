@@ -52,56 +52,56 @@ const AuthModal = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+                        className="auth-modal__overlay fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
                     />
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="fixed z-[101] bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+                        className="auth-modal__container fixed z-[101] bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
                     >
-                        <div className="p-8">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-slate-900">
+                        <div className="auth-modal__content p-8">
+                            <div className="auth-modal__header flex justify-between items-center mb-6">
+                                <h2 className="auth-modal__title text-2xl font-bold text-slate-900">
                                     {isLogin ? 'Welcome Back' : 'Create Account'}
                                 </h2>
-                                <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                                    <X size={20} className="text-slate-500" />
+                                <button onClick={onClose} className="auth-modal__close-btn p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                    <X size={20} className="auth-modal__close-icon text-slate-500" />
                                 </button>
                             </div>
 
                             {error && (
-                                <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
+                                <div className="auth-modal__error mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
                                     {error}
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700 ml-1">Email</label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <form onSubmit={handleSubmit} className="auth-modal__form space-y-4">
+                                <div className="auth-modal__input-group space-y-2">
+                                    <label className="auth-modal__label text-sm font-medium text-slate-700 ml-1">Email</label>
+                                    <div className="auth-modal__input-wrapper relative">
+                                        <Mail className="auth-modal__input-icon absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                         <input
                                             type="email"
                                             required
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all"
+                                            className="auth-modal__input w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all"
                                             placeholder="you@example.com"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700 ml-1">Password</label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <div className="auth-modal__input-group space-y-2">
+                                    <label className="auth-modal__label text-sm font-medium text-slate-700 ml-1">Password</label>
+                                    <div className="auth-modal__input-wrapper relative">
+                                        <Lock className="auth-modal__input-icon absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                         <input
                                             type="password"
                                             required
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all"
+                                            className="auth-modal__input w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all"
                                             placeholder="••••••••"
                                         />
                                     </div>
@@ -110,17 +110,17 @@ const AuthModal = ({ isOpen, onClose }) => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-3 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white font-semibold rounded-2xl shadow-lg shadow-pink-500/25 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
+                                    className="auth-modal__submit-btn w-full py-3 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white font-semibold rounded-2xl shadow-lg shadow-pink-500/25 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
                                 >
                                     {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
                                 </button>
                             </form>
 
-                            <div className="relative my-8">
-                                <div className="absolute inset-0 flex items-center">
+                            <div className="auth-modal__divider relative my-8">
+                                <div className="auth-modal__divider-line absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-slate-100"></div>
                                 </div>
-                                <div className="relative flex justify-center text-sm">
+                                <div className="auth-modal__divider-text relative flex justify-center text-sm">
                                     <span className="px-2 bg-white text-slate-400">or continue with</span>
                                 </div>
                             </div>
@@ -128,16 +128,16 @@ const AuthModal = ({ isOpen, onClose }) => {
                             <button
                                 onClick={handleGoogleSignIn}
                                 disabled={loading}
-                                className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-2xl hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                className="auth-modal__social-btn w-full flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-2xl hover:bg-slate-50 transition-colors disabled:opacity-50"
                             >
-                                <Chrome size={20} className="text-slate-600" />
-                                Google
+                                <Chrome size={20} className="auth-modal__social-icon text-slate-600" />
+                                <span className="auth-modal__social-label">Google</span>
                             </button>
 
-                            <div className="mt-8 text-center">
+                            <div className="auth-modal__footer mt-8 text-center">
                                 <button
                                     onClick={() => setIsLogin(!isLogin)}
-                                    className="text-sm text-pink-600 font-medium hover:text-pink-700 transition-colors"
+                                    className="auth-modal__toggle-btn text-sm text-pink-600 font-medium hover:text-pink-700 transition-colors"
                                 >
                                     {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
                                 </button>

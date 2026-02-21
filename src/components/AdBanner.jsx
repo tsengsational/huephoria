@@ -25,10 +25,10 @@ const AdBanner = ({ slot }) => {
     }, [slot]);
 
     return (
-        <div className="fixed bottom-[72px] left-0 right-0 z-[40] flex justify-center bg-white/80 backdrop-blur-md border-t border-gray-100 p-1 md:p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-            <div className="w-full flex justify-center items-center h-[50px] md:h-[60px]">
+        <div className="ad-banner fixed bottom-[72px] left-0 right-0 z-[40] flex justify-center bg-white/80 backdrop-blur-md border-t border-gray-100 p-1 md:p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <div className="ad-banner__container w-full flex justify-center items-center h-[50px] md:h-[60px]">
                 <ins
-                    className="adsbygoogle"
+                    className="ad-banner__ins adsbygoogle"
                     style={{ display: 'inline-block', width: '100%', height: '100%' }}
                     data-ad-client={import.meta.env.VITE_ADSENSE_PUB_ID}
                     data-ad-slot={slot || import.meta.env.VITE_ADSENSE_SLOT_ID}
