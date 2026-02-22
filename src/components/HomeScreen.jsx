@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Sparkles, Trophy, Flame, Pipette, Droplets, Palette, User, ChevronDown, Check, X, Loader2 } from 'lucide-react';
+import { Sparkles, Trophy, Flame, Pipette, Droplets, Palette, User, ChevronDown, Check, X, Loader2, Camera } from 'lucide-react';
+import { FastAverageColor } from 'fast-average-color';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
 import { collection, query, where, orderBy, limit, getDocs, updateDoc, doc, increment, setDoc } from 'firebase/firestore';
@@ -11,8 +12,10 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
     const [showPicker, setShowPicker] = useState(false);
     const [palettes, setPalettes] = useState([]);
     const [loadingPalettes, setLoadingPalettes] = useState(true);
+    const [isExtracting, setIsExtracting] = useState(false);
     const { user } = useAuth();
     const fileInputRef = useRef(null);
+    const fac = new FastAverageColor();
 
     // Calculate preview colors based on current selection
     const previewColors = useMemo(() => {
@@ -20,10 +23,19 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
             const data = generatePalette(motherColor, mode);
             return {
                 highlight: data.featured[1].hex,
-                lowlight: data.featured[3].hex
+                highlightIsDark: data.featured[1].isDark,
+                lowlight: data.featured[3].hex,
+                lowlightIsDark: data.featured[3].isDark,
+                motherIsDark: data.featured[0].isDark
             };
         } catch (e) {
-            return { highlight: '#86EFAC', lowlight: '#FDE047' }; // Fallbacks
+            return {
+                highlight: '#86EFAC',
+                highlightIsDark: false,
+                lowlight: '#FDE047',
+                lowlightIsDark: false,
+                motherIsDark: false
+            }; // Fallbacks
         }
     }, [motherColor, mode]);
 
@@ -72,9 +84,6 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
             const likeRef = doc(db, 'palettes', paletteId, 'likes', user.uid);
             const paletteRef = doc(db, 'palettes', paletteId);
 
-            // Using setDoc to track uniqueness of likes per user
-            // In a production app, we'd use a transaction or move this to a Cloud Function
-            // to ensure atomicity, but for now we'll do this:
             await setDoc(likeRef, { likedAt: new Date() });
             await updateDoc(paletteRef, {
                 likes: increment(1)
@@ -86,6 +95,31 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
             ));
         } catch (err) {
             console.error('Error liking palette:', err);
+        }
+    };
+
+    const handleImageUpload = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsExtracting(true);
+        try {
+            const url = URL.createObjectURL(file);
+            const color = await fac.getColorAsync(url);
+
+            // Set the extracted color as mother color
+            setMotherColor(color.hex);
+
+            // Small delay to ensure state is set before navigating
+            setTimeout(() => {
+                onGenerate();
+                setIsExtracting(false);
+                URL.revokeObjectURL(url);
+            }, 500);
+        } catch (err) {
+            console.error('Extraction failed:', err);
+            alert('Could not extract color from this image. Please try another one!');
+            setIsExtracting(false);
         }
     };
 
@@ -109,10 +143,32 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
                                 animate={{ backgroundColor: previewColors.lowlight }}
                                 className="home-screen__picker-bubble-sm absolute -bottom-2 -left-2 w-12 h-12 lg:w-20 lg:h-20 rounded-full border-4 border-white shadow-lg transition-colors duration-500"
                             />
+
+                            {/* Image Extraction Bubble */}
                             <motion.div
                                 animate={{ backgroundColor: previewColors.highlight }}
-                                className="home-screen__picker-bubble-lg absolute -top-2 -right-2 w-8 h-8 lg:w-16 lg:h-16 rounded-full border-4 border-white shadow-lg transition-colors duration-500"
-                            />
+                                className="home-screen__picker-bubble-lg absolute -top-2 -right-2 w-12 h-12 lg:w-20 lg:h-20 rounded-full hover:scale-110 border-4 border-white shadow-lg transition-colors duration-500 overflow-hidden flex items-center justify-center p-0"
+                            >
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isExtracting}
+                                    className="w-full h-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform bg-transparent outline-none group"
+                                    title="Extract color from image"
+                                >
+                                    {isExtracting ? (
+                                        <Loader2 size={24} className={`${previewColors.highlightIsDark ? 'text-white' : 'text-slate-900'} animate-spin`} />
+                                    ) : (
+                                        <Camera size={24} className={`${previewColors.highlightIsDark ? 'text-white' : 'text-slate-900'} opacity-80 group-hover:opacity-100 transition-opacity`} />
+                                    )}
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+                            </motion.div>
 
                             <motion.div
                                 whileHover={{ scale: 1.05 }}
@@ -125,7 +181,7 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
                                     className="home-screen__picker-icon-box absolute inset-x-0 bottom-0 top-0 m-auto w-12 h-12 lg:w-16 lg:h-16 rounded-full shadow-lg flex items-center justify-center border-2 border-white transform group-hover:scale-110 transition-all duration-500"
                                     style={{ backgroundColor: motherColor }}
                                 >
-                                    <Pipette className="home-screen__picker-icon text-white" size={20} />
+                                    <Pipette className={previewColors.motherIsDark ? 'text-white' : 'text-slate-900'} size={20} />
                                 </div>
                                 <div className="home-screen__picker-overlay absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
                             </motion.div>
@@ -146,7 +202,7 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
                                         className={`home-screen__mode-btn flex-1 py-4 rounded-2xl flex flex-col items-center gap-1.5 transition-all ${isActive ? 'home-screen__mode-btn--active bg-slate-900 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-slate-50'}`}
                                     >
                                         <Icon size={18} className="home-screen__mode-icon" />
-                                        <span className={`home-screen__mode-btn-label text-[10px] font-black uppercase ${isActive ? 'text-white' : 'text-slate-500'}`}>{m.label}</span>
+                                        <span className={`home-screen__mode-btn-label text-[10px] font-black uppercase ${isActive ? 'text-white' : 'text-slate-50'}`}>{m.label}</span>
                                     </button>
                                 );
                             })}

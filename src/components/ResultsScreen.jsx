@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check, MoreVertical, Grid, Monitor, Pipette, Sparkles, Flame, Trophy, Droplets, Brush } from 'lucide-react';
+import { Copy, RefreshCw, Save, Share2, ArrowLeft, Download, Check, MoreVertical, Grid, Monitor, Pipette, Sparkles, Flame, Trophy, Droplets, Brush, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -85,7 +85,7 @@ const CopiedOverlay = ({ show, isDark }) => (
     </AnimatePresence>
 );
 
-const MotherColorCard = ({ mother, copiedHex, copyToClipboard, onEdit, isExport = false }) => {
+const MotherColorCard = ({ mother, copiedHex, copyToClipboard, onEdit, isLocked, onToggleLock, isExport = false }) => {
     const CardContainer = isExport ? 'div' : motion.div;
     return (
         <CardContainer
@@ -98,30 +98,40 @@ const MotherColorCard = ({ mother, copiedHex, copyToClipboard, onEdit, isExport 
             </div>
 
             {!isExport && (
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <>
                     <button
-                        onClick={() => copyToClipboard(mother.hex)}
-                        className={`results-screen__main-copy-btn flex items-center gap-3 px-10 py-5 rounded-full font-black text-lg shadow-2xl hover:scale-105 active:scale-95 transition-all ${mother.isDark ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'
-                            }`}
+                        onClick={(e) => { e.stopPropagation(); onToggleLock(); }}
+                        className={`absolute top-8 right-8 p-4 rounded-2xl transition-all shadow-lg active:scale-90 ${mother.isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-slate-900'} backdrop-blur-md`}
+                        title={isLocked ? "Unlock Base Color" : "Lock Base Color"}
                     >
-                        {copiedHex === mother.hex ? <Check size={22} className="results-screen__copy-icon" /> : <Copy size={22} className="results-screen__copy-icon" />}
-                        <span className="results-screen__copy-label">{copiedHex === mother.hex ? 'Copied!' : 'Copy HEX'}</span>
+                        {isLocked ? <Lock size={20} className="opacity-100" /> : <Unlock size={20} className="opacity-40" />}
                     </button>
 
-                    <button
-                        onClick={onEdit}
-                        className={`p-5 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all ${mother.isDark ? 'bg-white/10 text-white backdrop-blur-md' : 'bg-slate-900/10 text-slate-900 backdrop-blur-md'}`}
-                        title="Edit Base Color"
-                    >
-                        <Pipette size={22} />
-                    </button>
-                </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <button
+                            onClick={() => copyToClipboard(mother.hex)}
+                            className={`results-screen__main-copy-btn flex items-center gap-3 px-10 py-5 rounded-full font-black text-lg shadow-2xl hover:scale-105 active:scale-95 transition-all ${mother.isDark ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'
+                                }`}
+                        >
+                            {copiedHex === mother.hex ? <Check size={22} className="results-screen__copy-icon" /> : <Copy size={22} className="results-screen__copy-icon" />}
+                            <span className="results-screen__copy-label">{copiedHex === mother.hex ? 'Copied!' : 'Copy HEX'}</span>
+                        </button>
+
+                        <button
+                            onClick={onEdit}
+                            className={`p-5 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all ${mother.isDark ? 'bg-white/10 text-white backdrop-blur-md' : 'bg-slate-900/10 text-slate-900 backdrop-blur-md'}`}
+                            title="Edit Base Color"
+                        >
+                            <Pipette size={22} />
+                        </button>
+                    </div>
+                </>
             )}
         </CardContainer>
     );
 };
 
-const BentoGrid = ({ featured, copiedHex, copyToClipboard, onEdit, isExport = false }) => {
+const BentoGrid = ({ featured, copiedHex, copyToClipboard, onEdit, lockedSlots, onToggleLock, isExport = false }) => {
     const Card = isExport ? 'div' : motion.div;
     return (
         <div className="results-screen__bento-section space-y-6">
@@ -147,7 +157,7 @@ const BentoGrid = ({ featured, copiedHex, copyToClipboard, onEdit, isExport = fa
                     {!isExport && <CopiedOverlay show={copiedHex === featured[1].hex} isDark={featured[1].isDark} />}
 
                     {!isExport && (
-                        <div className="absolute top-6 left-6 transition-all lg:opacity-0 lg:group-hover:opacity-40 opacity-40 z-10">
+                        <div className="absolute top-6 left-6 transition-all lg:opacity-0 lg:group-hover:opacity-40 opacity-40 z-10 flex items-center gap-2">
                             <div className={`p-2 rounded-xl ${featured[1].isDark ? 'bg-white/10' : 'bg-black/5'} backdrop-blur-sm lg:bg-transparent`}>
                                 <Copy size={16} className={featured[1].isDark ? 'text-white' : 'text-black'} />
                             </div>
@@ -155,12 +165,21 @@ const BentoGrid = ({ featured, copiedHex, copyToClipboard, onEdit, isExport = fa
                     )}
 
                     {!isExport && (
-                        <div
-                            className="absolute top-6 right-6 p-3 rounded-2xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
-                            onClick={(e) => { e.stopPropagation(); onEdit(1, featured[1].hex); }}
-                            title="Edit Color"
-                        >
-                            <Pipette size={20} className={featured[1].isDark ? 'text-white' : 'text-black'} />
+                        <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onToggleLock(1); }}
+                                className={`p-3 rounded-2xl transition-all shadow-md active:scale-95 ${featured[1].isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-slate-900'} backdrop-blur-sm`}
+                                title={lockedSlots[1] ? "Unlock Color" : "Lock Color"}
+                            >
+                                {lockedSlots[1] ? <Lock size={16} /> : <Unlock size={16} className="opacity-40" />}
+                            </button>
+                            <div
+                                className="p-3 rounded-2xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm shadow-md"
+                                onClick={(e) => { e.stopPropagation(); onEdit(1, featured[1].hex); }}
+                                title="Edit Color"
+                            >
+                                <Pipette size={20} className={featured[1].isDark ? 'text-white' : 'text-black'} />
+                            </div>
                         </div>
                     )}
                     <div className={`results-screen__bento-content relative z-10 ${featured[1].isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -187,12 +206,20 @@ const BentoGrid = ({ featured, copiedHex, copyToClipboard, onEdit, isExport = fa
                         )}
 
                         {!isExport && (
-                            <div
-                                className="absolute top-4 right-4 p-2 rounded-xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
-                                onClick={(e) => { e.stopPropagation(); onEdit(2, featured[2].hex); }}
-                                title="Edit Color"
-                            >
-                                <Pipette size={14} className={featured[2].isDark ? 'text-white' : 'text-black'} />
+                            <div className="absolute top-4 right-4 flex items-center gap-1.5 z-20">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onToggleLock(2); }}
+                                    className={`p-2 rounded-xl transition-all shadow-sm active:scale-95 ${featured[2].isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-slate-900'} backdrop-blur-sm`}
+                                >
+                                    {lockedSlots[2] ? <Lock size={12} /> : <Unlock size={12} className="opacity-40" />}
+                                </button>
+                                <div
+                                    className="p-2 rounded-xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm shadow-sm"
+                                    onClick={(e) => { e.stopPropagation(); onEdit(2, featured[2].hex); }}
+                                    title="Edit Color"
+                                >
+                                    <Pipette size={14} className={featured[2].isDark ? 'text-white' : 'text-black'} />
+                                </div>
                             </div>
                         )}
                         <div className={`results-screen__bento-content relative z-10 ${featured[2].isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -217,12 +244,20 @@ const BentoGrid = ({ featured, copiedHex, copyToClipboard, onEdit, isExport = fa
                         )}
 
                         {!isExport && (
-                            <div
-                                className="absolute top-4 right-4 p-2 rounded-xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
-                                onClick={(e) => { e.stopPropagation(); onEdit(4, featured[4].hex); }}
-                                title="Edit Color"
-                            >
-                                <Pipette size={14} className={featured[4].isDark ? 'text-white' : 'text-black'} />
+                            <div className="absolute top-4 right-4 flex items-center gap-1.5 z-20">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onToggleLock(4); }}
+                                    className={`p-2 rounded-xl transition-all shadow-sm active:scale-95 ${featured[4].isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-slate-900'} backdrop-blur-sm`}
+                                >
+                                    {lockedSlots[4] ? <Lock size={12} /> : <Unlock size={12} className="opacity-40" />}
+                                </button>
+                                <div
+                                    className="p-2 rounded-xl transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm shadow-sm"
+                                    onClick={(e) => { e.stopPropagation(); onEdit(4, featured[4].hex); }}
+                                    title="Edit Color"
+                                >
+                                    <Pipette size={14} className={featured[4].isDark ? 'text-white' : 'text-black'} />
+                                </div>
                             </div>
                         )}
                         <div className={`results-screen__bento-content relative z-10 ${featured[4].isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -250,12 +285,20 @@ const BentoGrid = ({ featured, copiedHex, copyToClipboard, onEdit, isExport = fa
                     )}
 
                     {!isExport && (
-                        <div
-                            className="absolute top-8 right-8 p-4 rounded-[1.5rem] transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm z-20"
-                            onClick={(e) => { e.stopPropagation(); onEdit(3, featured[3].hex); }}
-                            title="Edit Color"
-                        >
-                            <Pipette size={24} className={featured[3].isDark ? 'text-white' : 'text-black'} />
+                        <div className="absolute top-8 right-8 flex items-center gap-3 z-20">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onToggleLock(3); }}
+                                className={`p-4 rounded-[1.5rem] transition-all shadow-md active:scale-95 ${featured[3].isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-slate-900'} backdrop-blur-sm`}
+                            >
+                                {lockedSlots[3] ? <Lock size={20} /> : <Unlock size={20} className="opacity-40" />}
+                            </button>
+                            <div
+                                className="p-4 rounded-[1.5rem] transition-all lg:bg-black/0 lg:hover:bg-black/10 lg:opacity-0 lg:group-hover:opacity-100 opacity-100 bg-white/10 backdrop-blur-sm shadow-md"
+                                onClick={(e) => { e.stopPropagation(); onEdit(3, featured[3].hex); }}
+                                title="Edit Color"
+                            >
+                                <Pipette size={24} className={featured[3].isDark ? 'text-white' : 'text-black'} />
+                            </div>
                         </div>
                     )}
                     <div className={`results-screen__bento-content text-center relative z-10 ${featured[3].isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -300,7 +343,7 @@ const ExtendedMatrix = ({ matrix, copiedHex, onEdit, isExport = false }) => (
     </div>
 );
 
-const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, onUpdateColor, onBack }) => {
+const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, onUpdateColor, onBack, onSelect }) => {
     const exportRef = useRef(null);
     const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'ui'
     const [isExporting, setIsExporting] = useState(false);
@@ -309,12 +352,21 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
     const [copiedHex, setCopiedHex] = useState(null);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [editingColor, setEditingColor] = useState(null); // { type, index, hex }
+    const [lockedSlots, setLockedSlots] = useState({ 0: false, 1: false, 2: false, 3: false, 4: false });
     const { user } = useAuth();
 
     if (!paletteData) return null;
 
     const { featured, matrix } = paletteData;
     const mother = featured[0];
+
+    const toggleLock = (index) => {
+        setLockedSlots(prev => ({ ...prev, [index]: !prev[index] }));
+    };
+
+    const handleRegenerateClick = () => {
+        onRegenerate(lockedSlots);
+    };
 
     const copyToClipboard = (hex) => {
         navigator.clipboard.writeText(hex);
@@ -514,11 +566,15 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                                         copiedHex={copiedHex}
                                         copyToClipboard={copyToClipboard}
                                         onEdit={() => setEditingColor({ type: 'featured', index: 0, hex: mother.hex })}
+                                        isLocked={lockedSlots[0]}
+                                        onToggleLock={() => toggleLock(0)}
                                     />
                                     <BentoGrid
                                         featured={featured}
                                         copiedHex={copiedHex}
                                         copyToClipboard={copyToClipboard}
+                                        lockedSlots={lockedSlots}
+                                        onToggleLock={toggleLock}
                                         onEdit={(index, hex) => setEditingColor({ type: 'featured', index, hex })}
                                     />
                                 </motion.div>
@@ -611,7 +667,7 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                             </button>
 
                             <button
-                                onClick={onRegenerate}
+                                onClick={handleRegenerateClick}
                                 className="results-screen__action-btn results-screen__action-btn--secondary w-full py-5 rounded-[2rem] border-2 border-slate-100 flex items-center justify-center gap-3 font-black text-slate-700 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-[0.98]"
                             >
                                 <RefreshCw size={24} className="results-screen__action-icon text-slate-300" />
