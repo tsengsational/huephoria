@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Palettable</string>
+    <string name="title_activity_main">Palettable</string>
+    <string name="package_name">com.palettable.app</string>
+    <string name="custom_url_scheme">com.palettable.app</string>
+</resources>

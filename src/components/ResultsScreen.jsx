@@ -480,7 +480,7 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                 </button>
                 <div className="results-screen__title-box text-center">
                     <h2 className="results-screen__title text-2xl font-black text-slate-900 tracking-tight capitalize">{paletteData.mode} Palette</h2>
-                    <p className="results-screen__subtitle text-[10px] font-black uppercase tracking-[0.2em] text-pink-500">Huephoria Engine v2</p>
+                    <p className="results-screen__subtitle text-[10px] font-black uppercase tracking-[0.2em] text-pink-500">Palettable Engine v2</p>
                 </div>
                 <div className="results-screen__header-right flex gap-2">
                     <button className="results-screen__action-trigger p-3 rounded-2xl hover:bg-white transition-colors border border-transparent hover:border-slate-100">
@@ -539,13 +539,13 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                             <div className="space-y-8">
                                 <div className="text-center space-y-2 mb-10">
                                     <h1 className="text-4xl font-black text-slate-900 capitalize">{paletteData.mode} Palette</h1>
-                                    <p className="text-sm font-black uppercase tracking-[0.3em] text-pink-500">Huephoria v2 Professional</p>
+                                    <p className="text-sm font-black uppercase tracking-[0.3em] text-pink-500">Palettable v2 Professional</p>
                                 </div>
                                 <MotherColorCard mother={mother} isExport={true} />
                                 <BentoGrid featured={featured} isExport={true} />
                                 <ExtendedMatrix matrix={matrix} isExport={true} />
                                 <div className="pt-10 text-center opacity-30">
-                                    <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">Created with Huephoria Mixer Studio</p>
+                                    <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">Created with Palettable Mixer Studio</p>
                                 </div>
                             </div>
                         </div>
