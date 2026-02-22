@@ -18,11 +18,30 @@ function App() {
     setScreen('results');
   };
 
-  const handleRegenerate = () => {
-    const newColor = getRandomVibrantColor();
-    setMotherColor(newColor);
-    const data = generatePalette(newColor, mode);
-    setPaletteData(data);
+  const handleRegenerate = (lockedSlots = {}) => {
+    if (!paletteData) return;
+
+    // Phase 3: Regeneration Logic
+    let rootHex = paletteData.featured[0].hex;
+
+    // If mother is unlocked, pick new random root
+    if (!lockedSlots[0]) {
+      rootHex = getRandomVibrantColor();
+      setMotherColor(rootHex);
+    }
+
+    // Generate NEW palette from (possibly new) root
+    const newData = generatePalette(rootHex, mode);
+
+    // Merge locked colors back into the featured array
+    const mergedFeatured = newData.featured.map((f, i) => {
+      return lockedSlots[i] ? paletteData.featured[i] : f;
+    });
+
+    setPaletteData({
+      ...newData,
+      featured: mergedFeatured
+    });
   };
 
   const handleModeChange = (newMode) => {
