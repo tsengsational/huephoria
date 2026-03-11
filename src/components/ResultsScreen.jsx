@@ -480,7 +480,7 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                 </button>
                 <div className="results-screen__title-box text-center">
                     <h2 className="results-screen__title text-2xl font-black text-slate-900 tracking-tight capitalize">{paletteData.mode} Palette</h2>
-                    <p className="results-screen__subtitle text-[10px] font-black uppercase tracking-[0.2em] text-pink-500">Huephoria Engine v2</p>
+                    <p className="results-screen__subtitle text-[10px] font-black uppercase tracking-[0.2em] text-pink-500">Palettable Engine v2</p>
                 </div>
                 <div className="results-screen__header-right flex gap-2">
                     <button className="results-screen__action-trigger p-3 rounded-2xl hover:bg-white transition-colors border border-transparent hover:border-slate-100">
@@ -539,13 +539,13 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                             <div className="space-y-8">
                                 <div className="text-center space-y-2 mb-10">
                                     <h1 className="text-4xl font-black text-slate-900 capitalize">{paletteData.mode} Palette</h1>
-                                    <p className="text-sm font-black uppercase tracking-[0.3em] text-pink-500">Huephoria v2 Professional</p>
+                                    <p className="text-sm font-black uppercase tracking-[0.3em] text-pink-500">Palettable v2 Professional</p>
                                 </div>
                                 <MotherColorCard mother={mother} isExport={true} />
                                 <BentoGrid featured={featured} isExport={true} />
                                 <ExtendedMatrix matrix={matrix} isExport={true} />
                                 <div className="pt-10 text-center opacity-30">
-                                    <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">Created with Huephoria Mixer Studio</p>
+                                    <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">Created with Palettable Mixer Studio</p>
                                 </div>
                             </div>
                         </div>
@@ -610,6 +610,26 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                             onEdit={(r, c, hex) => setEditingColor({ type: 'matrix', index: [r, c], hex })}
                         />
                     )}
+
+                    {/* Content Enrichment for AdSense & SEO */}
+                    <div className="results-screen__theory-section grid grid-cols-1 md:grid-cols-2 gap-8 pt-12 mt-12 border-t border-slate-100">
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-black text-slate-800">Color Theory Insights</h3>
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                                This {paletteData.mode} palette is mathematically derived from the base color {mother.hex}. In professional design, this harmony ensures that your interface remains cohesive while providing enough contrast for accessibility.
+                            </p>
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                                The accent and highlight tones are selected to guide user attention, while the deep shades and muted tones provide the necessary structural depth for background elements and secondary information.
+                            </p>
+                        </div>
+                        <div className="bg-pink-50/50 p-6 rounded-[2rem] border border-pink-100 space-y-4">
+                            <h4 className="font-bold text-slate-800 text-sm">Why this works</h4>
+                            <ul className="space-y-3 text-xs text-slate-500 leading-relaxed list-disc pl-4">
+                                <li><strong>Visual Balance:</strong> The distribution of light and dark values creates a natural hierarchy.</li>
+                                <li><strong>Emotional Impact:</strong> The {paletteData.mode} mode evokes a specific psychological response suitable for {paletteData.mode === 'vibrant' ? 'dynamic and engaging' : 'professional and focused'} applications.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Sidebar Column: Actions */}

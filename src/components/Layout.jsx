@@ -116,6 +116,39 @@ const Layout = ({ children, onNavigateSaved }) => {
                 </button>
             </nav>
 
+            {/* Desktop & SEO Footer */}
+            <footer className="layout__footer bg-white border-t border-gray-100 px-8 py-12 mt-12 hidden lg:block">
+                <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div className="space-y-4">
+                        <h4 className="text-lg font-bold text-slate-900">Palettable</h4>
+                        <p className="text-slate-500 text-sm leading-relaxed">
+                            The ultimate design companion for creating beautiful, balanced, and accessible color palettes. Powered by advanced color theory and built for the modern web.
+                        </p>
+                    </div>
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Resources</h4>
+                        <ul className="space-y-2 text-sm font-medium text-slate-600">
+                            <li><button className="hover:text-pink-500 transition-colors">Color Theory Guide</button></li>
+                            <li><button className="hover:text-pink-500 transition-colors">API Documentation</button></li>
+                            <li><button className="hover:text-pink-500 transition-colors">Design System Tips</button></li>
+                        </ul>
+                    </div>
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Legal</h4>
+                        <ul className="space-y-2 text-sm font-medium text-slate-600">
+                            <li><button className="hover:text-pink-500 transition-colors">Privacy Policy</button></li>
+                            <li><button className="hover:text-pink-500 transition-colors">Terms of Service</button></li>
+                            <li><button className="hover:text-pink-500 transition-colors">Cookie Policy</button></li>
+                        </ul>
+                    </div>
+                </div>
+                <div className="max-w-5xl mx-auto pt-8 mt-8 border-t border-slate-50 text-center">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                        © 2026 Palettable Studio. All rights reserved.
+                    </p>
+                </div>
+            </footer>
+
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}

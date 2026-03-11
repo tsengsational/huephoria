@@ -5,12 +5,23 @@ import HomeScreen from './components/HomeScreen';
 import ResultsScreen from './components/ResultsScreen';
 import SavedPalettes from './components/SavedPalettes';
 import { generatePalette, getRandomVibrantColor, resolveColorInfo } from './utils/colorLogic';
+import { AdMob } from '@capacitor-community/admob';
+import { Capacitor } from '@capacitor/core';
 
 function App() {
   const [motherColor, setMotherColor] = useState(getRandomVibrantColor());
   const [mode, setMode] = useState('vibrant');
   const [screen, setScreen] = useState('home');
   const [paletteData, setPaletteData] = useState(null);
+
+  useEffect(() => {
+    // Initialize AdMob if on native platform
+    if (Capacitor.isNativePlatform()) {
+      AdMob.initialize({
+        initializeForTesting: true,
+      });
+    }
+  }, []);
 
   const handleGenerate = () => {
     const data = generatePalette(motherColor, mode);

@@ -349,6 +349,32 @@ const HomeScreen = ({ motherColor, setMotherColor, onGenerate, onSelect, mode, s
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Content Enrichment for AdSense & SEO */}
+            <div className="home-screen__info-sections grid grid-cols-1 md:grid-cols-2 gap-8 pt-12 mt-12 border-t border-slate-100">
+                <div className="space-y-4">
+                    <h3 className="text-xl font-black text-slate-800">About Palettable</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                        Palettable is a high-performance color palette generator designed for modern creators. Whether you are building a brand identity or a web application, our engine provides scientifically backed color harmonies in seconds. We combine traditional color theory with modern digital design standards to ensure every palette you create is balanced, accessible, and stunning.
+                    </p>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                        Our tool allows you to extract inspiration directly from the world around you using our image-to-color extraction technology. Simply upload an image, and Palettable will find the dominant color and build a professional design system around it.
+                    </p>
+                </div>
+                <div className="space-y-4">
+                    <h3 className="text-xl font-black text-slate-800">Advanced Harmony Logic</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <h4 className="font-bold text-slate-800 text-sm mb-1">Vibrant & Analogous</h4>
+                            <p className="text-slate-500 text-xs leading-relaxed">Create high-energy palettes using sibling colors on the wheel or high-contrast combinations for maximum impact.</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <h4 className="font-bold text-slate-800 text-sm mb-1">Monochrome & Minimal</h4>
+                            <p className="text-slate-500 text-xs leading-relaxed">Perfect for sleek, modern interfaces that require depth without the noise of multiple hues.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
