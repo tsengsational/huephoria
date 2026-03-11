@@ -610,6 +610,26 @@ const ResultsScreen = ({ paletteData, currentMode, onRegenerate, onModeChange, o
                             onEdit={(r, c, hex) => setEditingColor({ type: 'matrix', index: [r, c], hex })}
                         />
                     )}
+
+                    {/* Content Enrichment for AdSense & SEO */}
+                    <div className="results-screen__theory-section grid grid-cols-1 md:grid-cols-2 gap-8 pt-12 mt-12 border-t border-slate-100">
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-black text-slate-800">Color Theory Insights</h3>
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                                This {paletteData.mode} palette is mathematically derived from the base color {mother.hex}. In professional design, this harmony ensures that your interface remains cohesive while providing enough contrast for accessibility.
+                            </p>
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                                The accent and highlight tones are selected to guide user attention, while the deep shades and muted tones provide the necessary structural depth for background elements and secondary information.
+                            </p>
+                        </div>
+                        <div className="bg-pink-50/50 p-6 rounded-[2rem] border border-pink-100 space-y-4">
+                            <h4 className="font-bold text-slate-800 text-sm">Why this works</h4>
+                            <ul className="space-y-3 text-xs text-slate-500 leading-relaxed list-disc pl-4">
+                                <li><strong>Visual Balance:</strong> The distribution of light and dark values creates a natural hierarchy.</li>
+                                <li><strong>Emotional Impact:</strong> The {paletteData.mode} mode evokes a specific psychological response suitable for {paletteData.mode === 'vibrant' ? 'dynamic and engaging' : 'professional and focused'} applications.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Sidebar Column: Actions */}
