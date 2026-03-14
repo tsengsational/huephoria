@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, LogOut, ChevronDown, Palette, Sparkles, Heart, Compass, Settings } from 'lucide-react';
 import AdBanner from './AdBanner';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 
-const Layout = ({ children, onNavigateSaved }) => {
+const Layout = ({ children, onNavigateSaved, onNavigateBlog, onNavigateHome }) => {
     const { user, logout } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
@@ -13,11 +14,19 @@ const Layout = ({ children, onNavigateSaved }) => {
         <div className="layout min-h-screen bg-gray-50 flex flex-col font-sans text-slate-900">
             {/* Header */}
             <header className="layout__header px-6 py-4 flex justify-between items-center bg-white/50 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
-                <h1 className="layout__logo text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-fuchsia-600">
-                    Palettable
-                </h1>
+                <Link to="/" className="no-underline">
+                    <h1 className="layout__logo text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-fuchsia-600 cursor-pointer">
+                        Palettable
+                    </h1>
+                </Link>
 
-                <div className="layout__header-right relative">
+                <div className="layout__header-right flex items-center gap-6 relative">
+                    <Link 
+                        to="/blog"
+                        className="hidden md:block text-sm font-semibold text-slate-600 hover:text-pink-500 transition-colors"
+                    >
+                        Blog
+                    </Link>
                     {user ? (
                         <div
                             className="layout__account-trigger flex items-center gap-2 cursor-pointer group"
@@ -128,17 +137,18 @@ const Layout = ({ children, onNavigateSaved }) => {
                     <div className="space-y-4">
                         <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Resources</h4>
                         <ul className="space-y-2 text-sm font-medium text-slate-600">
-                            <li><button className="hover:text-pink-500 transition-colors">Color Theory Guide</button></li>
-                            <li><button className="hover:text-pink-500 transition-colors">API Documentation</button></li>
-                            <li><button className="hover:text-pink-500 transition-colors">Design System Tips</button></li>
+                            <li><Link to="/blog" className="hover:text-pink-500 transition-colors">Official Blog</Link></li>
+                            <li><Link to="/color-theory-guide" className="hover:text-pink-500 transition-colors">Color Theory Guide</Link></li>
+                            <li><Link to="/api-documentation" className="hover:text-pink-500 transition-colors">API Documentation</Link></li>
+                            <li><Link to="/design-system-tips" className="hover:text-pink-500 transition-colors">Design System Tips</Link></li>
                         </ul>
                     </div>
                     <div className="space-y-4">
                         <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Legal</h4>
                         <ul className="space-y-2 text-sm font-medium text-slate-600">
-                            <li><button className="hover:text-pink-500 transition-colors">Privacy Policy</button></li>
-                            <li><button className="hover:text-pink-500 transition-colors">Terms of Service</button></li>
-                            <li><button className="hover:text-pink-500 transition-colors">Cookie Policy</button></li>
+                            <li><Link to="/privacy-policy" className="hover:text-pink-500 transition-colors">Privacy Policy</Link></li>
+                            <li><Link to="/terms-of-service" className="hover:text-pink-500 transition-colors">Terms of Service</Link></li>
+                            <li><Link to="/cookie-policy" className="hover:text-pink-500 transition-colors">Cookie Policy</Link></li>
                         </ul>
                     </div>
                 </div>

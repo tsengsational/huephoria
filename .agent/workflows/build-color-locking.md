@@ -3,7 +3,7 @@ description: Build Partial Freezing (locking) Feature for the Color Palette
 ---
 
 <project_context>
-You are an autonomous AI engineering agent extending the "Huephoria" color palette app.
+You are an autonomous AI engineering agent extending the "Palettable" color palette app.
 The user wants to add a "Partial Freezing" feature to the "Palette Generated" screen. Users should be able to lock specific colors in the Bento Grid so that when they press the "Regenerate" button, only the unlocked colors are replaced with new selections from the color matrix.
 </project_context>
 

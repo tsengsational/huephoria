@@ -2,7 +2,7 @@
 description: Build Client-Side Image-to-Color Extraction Feature
 ---
 
-You are an autonomous AI engineering agent extending the "Huephoria" color palette generator.
+You are an autonomous AI engineering agent extending the "Palettable" color palette generator.
 The user wants to add an "Image-to-Palette" feature on the Home screen. This must be processed 100% client-side using the Canvas API and color quantization, without relying on any backend servers.
 </project_context>
 

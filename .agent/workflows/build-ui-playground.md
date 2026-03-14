@@ -3,7 +3,7 @@ description: Build the Live UI Component Playground Feature
 ---
 
 <project_context>
-You are an autonomous AI engineering agent extending the "Huephoria" color palette generator.
+You are an autonomous AI engineering agent extending the "Palettable" color palette generator.
 The user wants to add a "Playground Mode" to the "Palette Generated" screen. This mode will allow users to toggle between viewing the raw color blocks (the Bento Grid) and a realistic mockup of SaaS UI components that are dynamically styled using their newly generated color palette.
 </project_context>
 

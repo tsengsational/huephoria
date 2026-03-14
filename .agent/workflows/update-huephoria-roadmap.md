@@ -1,5 +1,5 @@
 ---
-description: Huephoria Existing Codebase Update and Feature Injection Plan
+description: Palettable Existing Codebase Update and Feature Injection Plan
 ---
 
 <project_context>
